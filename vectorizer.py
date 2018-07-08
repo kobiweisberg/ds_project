@@ -46,7 +46,7 @@ def BOW_w2v(files):
     w2v_file = "w2v.pickle"
     avg_w2v = AvgWordVectors()
     avg_w2v.fit(w2v_file)
-    return avg_w2v.transform(files)
+    return np.array(avg_w2v.transform(files))
 
 class AvgWordVectors:
     def __init__(self, weights={}):

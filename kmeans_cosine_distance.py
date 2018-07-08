@@ -20,8 +20,11 @@ def magnitude(vector):
 def similarity(v1, v2):
     """Ratio of the dot product & the product of the magnitudes of vectors."""
     return dot_product(v1, v2) / (magnitude(v1) * magnitude(v2) + .00000000001)
-
-
+'''
+def similarity(v1, v2):
+    """Ratio of the dot product & the product of the magnitudes of vectors."""
+    return np.linalg.norm(v1-v2)
+'''
 class KMeans(object):
     """K-Means clustering. Uses cosine similarity as the distance function."""
 
@@ -30,9 +33,14 @@ class KMeans(object):
         self.centers = random.sample(vectors, k)
         self.clusters = [[] for c in self.centers]
         self.vectors = vectors
-        self.indexes = np.zeros(len(vectors))
-        self.counter = 0
-
+        self.vectors_indexes = np.zeros(len(vectors))
+        self.counter_vectors_of_centers = np.zeros(k)
+    def update_new_centers(self,index,vector):
+        if(self.counter_vectors_of_centers[index] == 0):
+            self.new_centers[index] = vector
+        else:
+            self.new_centers[index] = ( (self.counter_vectors_of_centers[index]*self.new_centers[index]) + vector) / (self.counter_vectors_of_centers[index]+1)
+        self.counter_vectors_of_centers[index] += 1
     def update_clusters(self):
         """Determine which cluster center each `self.vector` is closest to."""
         def closest_center_index(vector):
@@ -43,39 +51,53 @@ class KMeans(object):
             return np.argmax(matrix_similarity)
             #return self.centers.index(center)
 
-        self.clusters = [[] for c in self.centers]
+        self.new_centers = np.zeros_like(self.centers)
+        self.counter_vectors_of_centers = np.zeros_like(self.counter_vectors_of_centers)
+        #self.clusters = [np.zeros_like(self.centers) for c in self.centers]
         for idx,vector in enumerate(self.vectors):
-             index = closest_center_index(vector)
-             self.clusters[index].append(vector)
-             self.indexes[idx] = index
+             closest_index = closest_center_index(vector)
+             self.update_new_centers(closest_index,vector)
+             #self.clusters[index] = (index  * self.clusters[index] + vector) / (index+1)
+             #print('assign vector #{} to cluster {}'.format(idx,closest_index))
+             self.vectors_indexes[idx] = closest_index
 
 
     def update_centers(self):
         """Move `self.centers` to the centers of `self.clusters`.
         Return True if centers moved, else False.
         """
-        new_centers = []
-        for cluster in self.clusters:
-            center = [average(ci) for ci in zip(*cluster)]
-            new_centers.append(np.array(center))
+        #new_centers = []
+        #for cluster in self.clusters:
+        #for ii in range(len(self.clusters)):
+        #    #center = [average(ci) for ci in zip(*cluster)]
+        #    center = [ci/n for ci,n in zip(self.clusters[ii],self.clusters_counter[ii])]
+        #    new_centers.append(np.array(center))
 
-        if np.allclose(new_centers,self.centers):
+        if np.allclose(self.new_centers,self.centers):
             return False
 
-        self.centers = new_centers
+        self.centers = self.new_centers
+
         return True
 
     def main_loop(self):
         """Perform k-means clustering."""
         print('start main loop')
+        self.new_centers = self.centers
         self.update_clusters()
         iter = 0
         while self.update_centers():
-            if(divmod(iter,2)[1]==0):
-                print('kmeans iteration: {%d}'.format(iter))
+            if(divmod(iter,1)[1]==0):
+                print('kmeans iteration: {}'.format(iter))
             iter+=1
             self.update_clusters()
 
 
 def average(sequence):
     return sum(sequence) / len(sequence)
+
+if(__name__=='__main__'):
+    a=np.array([[1,2,1],[1,1,1],[-10,-14,-15],[-10,-14,-16]])
+    km = KMeans(2,list(a))
+    km.main_loop()
+    print(km.vectors_indexes)
