@@ -18,6 +18,6 @@ not_allowed= re.compile(r"[^\s\w<>_]")
 def clean_text(text):
     return not_allowed.sub("", digits.sub("<NUM>",text.lower()))
 
-test_text = 'Hi hagai 3 *** hh jg'
 if __name__=='__main__':
+    test_text = 'Hi hagai 3 *** hh jg'
     print(clean_text(test_text))

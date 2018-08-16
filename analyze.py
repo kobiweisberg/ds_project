@@ -58,6 +58,8 @@ def conf_mat2scores(cm):
     accuracy = np.sum(TP)/np.sum(cm)
     precision = TP / (TP + FP)
     recall = TP / (TP + FN)
+    precision = np.nan_to_num(precision,0)
+    recall = np.nan_to_num(recall, 0)
     return accuracy,precision,recall
 
 class Results:

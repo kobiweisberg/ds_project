@@ -12,7 +12,9 @@ import preprocess as pp
 import vectorizer as vr
 import cluster as clst
 import analyze as anlz
-prarameters = [Params(vect_tfidf,clust_hirarchical, aff_euclidean, link_ward, 1e-4, 0.05, 20, 1000)]
+
+num_of_documents = 1000
+prarameters = [Params(vect_tfidf,clust_hirarchical, aff_euclidean, link_ward, 1e-4, 0.05, 20, num_of_documents)]
 for param in prarameters:
     #setup
     t = time.localtime()
@@ -68,9 +70,8 @@ for param in prarameters:
     elif(param.clustering == clust_hirarchical):
         #hirarchical
         (clusters, _) = clst.hirarchical(emails_representation, param.k,aff=param.affine,link=param.linkage)
-
-
-
+    else:
+        raise ValueError('clustering is not supported with: ' + param.clustering)
     #analyze
 
     random_clst = np.random.randint(0, param.k, param.max_num)
