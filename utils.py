@@ -1,4 +1,11 @@
 import time
+import pandas as pd
+import pickle
+import csv
+import os.path
+
+csv_path = 'results.csv'
+pickle_path = 'results.pkl'
 
 vect_bow = 'bow'
 vect_tfidf = 'tfidf'
@@ -35,10 +42,25 @@ class Params:
     def get_list(self):
         return [self.vectorizing, self.clustering, self.affine, self.linkage, self.min_df, self.max_df, self.k, self.max_num]
 
-def save_results(params, results, file_path = 'a.txt'): #results is a list of [acc, precision,recall]
+def save_results(params, results):
+    if(os.path.exists(pickle_path)):
+        with open(pickle_path,'rb') as pkl_file:
+            pickle_data = pickle.load(pkl_file)
+    else:
+        pickle_data = []
     t = time.localtime()
     timestamp = time.strftime('%b_%d_%Y_%H%M', t)
-    with open(file_path,'a') as ff:
-        ff.write('time=' + timestamp + '\n')
-        ff.write('params=' + str(params.get_list()) + '\n')
-        ff.write('results=' + str(results) + '\n')
+    #total_results = pd.DataFrame(params.get_list()+results.get_list())
+    pickle_data.append({'date':t,'params':params,'results':results})
+    with open(pickle_path,'wb') as pkl_file:
+        pickle.dump(pickle_data,pkl_file)
+    with open(csv_path,'a') as ff:
+        wr = csv.writer(ff, dialect='excel')
+        wr.writerows([[timestamp] + params.get_list() + results.get_list(),\
+        [timestamp] + ['precision'] + results.get_list_full_precision(),\
+        [timestamp] + ['recall'] + results.get_list_full_recall()])
+
+def load_results():
+    with open(pickle_path, 'rb') as pkl_file:
+        pickle_data = pickle.load(pkl_file)
+    return pickle_data

@@ -1,7 +1,7 @@
 import random
 from math import sqrt
 import numpy as np
-
+max_iters = 100
 def dot_product(v1, v2):
     """Get the dot product of the two vectors.
     if A = [a1, a2, a3] && B = [b1, b2, b3]; then
@@ -82,14 +82,16 @@ class KMeans(object):
 
     def main_loop(self):
         """Perform k-means clustering."""
-        print('start main loop')
+        #print('start main loop')
         self.new_centers = self.centers
         self.update_clusters()
         iter = 0
         while self.update_centers():
-            if(divmod(iter,1)[1]==0):
-                print('kmeans iteration: {}'.format(iter))
+            #if(divmod(iter,1)[1]==0):
+                #print('kmeans iteration: {}'.format(iter))
             iter+=1
+            if(iter>max_iters):
+                break
             self.update_clusters()
 
 
