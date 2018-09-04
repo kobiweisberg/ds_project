@@ -1,4 +1,5 @@
 import time
+import numpy as np
 import pandas as pd
 import pickle
 import csv
@@ -43,22 +44,38 @@ class Params:
         return [self.vectorizing, self.clustering, self.affine, self.linkage, self.min_df, self.max_df, self.k, self.max_num]
 
 def save_results(params, results):
+    '''
     if(os.path.exists(pickle_path)):
         with open(pickle_path,'rb') as pkl_file:
             pickle_data = pickle.load(pkl_file)
     else:
         pickle_data = []
-    t = time.localtime()
-    timestamp = time.strftime('%b_%d_%Y_%H%M', t)
     #total_results = pd.DataFrame(params.get_list()+results.get_list())
     pickle_data.append({'date':t,'params':params,'results':results})
     with open(pickle_path,'wb') as pkl_file:
         pickle.dump(pickle_data,pkl_file)
+    '''
+    t = time.localtime()
+    timestamp = time.strftime('%b_%d_%Y_%H%M', t)
     with open(csv_path,'a') as ff:
         wr = csv.writer(ff, dialect='excel')
         wr.writerows([[timestamp] + params.get_list() + results.get_list(),\
         [timestamp] + ['precision'] + results.get_list_full_precision(),\
         [timestamp] + ['recall'] + results.get_list_full_recall()])
+    csv_table_k = 'linkage_table_' + str(params.k) + '.csv'
+    if(os.path.exists(csv_table_k)):
+        data = np.genfromtxt(csv_table_k, delimiter=',')
+    else:
+        data = np.zeros((params.max_num,params.max_num))
+    new_data = data + results.linkage_table
+    np.savetxt(csv_table_k, new_data, fmt = '%d' ,delimiter=",")
+
+
+def load_linkage_table(k):
+    csv_table_k = 'linkage_table_' + str(k) + '.csv'
+    data = np.genfromtxt(csv_table_k, delimiter=',')
+    return data
+
 
 def load_results():
     with open(pickle_path, 'rb') as pkl_file:

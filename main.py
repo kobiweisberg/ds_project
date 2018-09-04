@@ -5,77 +5,57 @@ import pickle
 import numpy as np
 import matplotlib.pyplot as plt
 import time
-
+import itertools
 # our imports
 from utils import *
 import preprocess as pp
 import vectorizer as vr
 import cluster as clst
 import analyze as anlz
+import warnings
 
-num_of_documents = 100# 11300
+
+with open(csv_path, 'a') as ff:
+    wr = csv.writer(ff, dialect='excel')
+    wr.writerow(['time', 'vectorizer', 'clustering', 'distance_metric', 'linkage', 'min_df', 'max_df', 'k', 'num_of_documents'])
+
+
+num_of_documents = 11300
 max_df = 0.05
 min_df = 1e-4
 all_k = [20, 50, 200]
-prarameters = [
-    Params(vect_tfidf,clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, all_k[0], num_of_documents),
+all_vect = [vect_tfidf, vect_w2v, vect_bow]
+prarameters = []
+for vect, k in itertools.product(all_vect,all_k):
+    prarameters = prarameters + \
+    [
+        Params(vect, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, k, num_of_documents),
+        Params(vect, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, k, num_of_documents),
+        Params(vect, clust_hirarchical, aff_euclidean, link_avarage, min_df, max_df, k, num_of_documents),
+        Params(vect, clust_kneams, aff_euclidean, link_ward, min_df, max_df, k, num_of_documents),
+        Params(vect, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, k, num_of_documents),
+        Params(vect, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, k, num_of_documents),
     ]
-'''
-    Params(vect_bow, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_tfidf, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_tfidf,clust_kneams, aff_euclidean, link_ward, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_w2v, clust_kneams, aff_euclidean, link_ward, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_bow, clust_kneams, aff_euclidean, link_ward, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_tfidf, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_tfidf, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_tfidf,clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_tfidf, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_tfidf,clust_kneams, aff_euclidean, link_ward, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_w2v, clust_kneams, aff_euclidean, link_ward, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_bow, clust_kneams, aff_euclidean, link_ward, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_tfidf, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_tfidf, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_tfidf, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_tfidf, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_tfidf, clust_kneams, aff_euclidean, link_ward, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_w2v, clust_kneams, aff_euclidean, link_ward, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_bow, clust_kneams, aff_euclidean, link_ward, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_tfidf, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_tfidf, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_w2v, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_bow, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_tfidf, clust_kneams, aff_cosine, link_ward, min_df, max_df, all_k[0], num_of_documents),
-    Params(vect_w2v, clust_kneams, aff_cosine, link_ward, min_df, max_df, all_k[0], num_of_documents),
-    #Params(vect_bow, clust_kneams, aff_cosine, link_ward, min_df, max_df, all_k[0], num_of_documents), #k=0
-    Params(vect_tfidf, clust_kneams, aff_cosine, link_ward, min_df, max_df, all_k[1], num_of_documents),
-    Params(vect_w2v, clust_kneams, aff_cosine, link_ward, min_df, max_df, all_k[1], num_of_documents),
-    #Params(vect_bow, clust_kneams, aff_cosine, link_ward, min_df, max_df, all_k[1], num_of_documents),#k=1
-    Params(vect_tfidf, clust_kneams, aff_cosine, link_ward, min_df, max_df, all_k[2], num_of_documents),
-    Params(vect_w2v, clust_kneams, aff_cosine, link_ward, min_df, max_df, all_k[2], num_of_documents),
-    #Params(vect_bow, clust_kneams, aff_cosine, link_ward, min_df, max_df, all_k[2], num_of_documents),  # k=2
-]
-'''
+for vect, k in itertools.product(all_vect,all_k):
+    prarameters = prarameters + \
+    [
+        Params(vect, clust_kneams, aff_cosine, link_ward, min_df, max_df, k, num_of_documents),
+    ]
+files = os.listdir(os.path.curdir)
+for file in files:
+    if file.startswith('linkage_table'):
+        warnings.warn('warning: csv file already exists')
+
+#params
+
+newsgroups_train = fetch_20newsgroups(subset='train')
+labels = newsgroups_train.target
+labels_names = newsgroups_train.target_names
+#TODO: consider take only body
+emails = newsgroups_train.data
+number_of_labels = 20 #TODO magic number
+
+
 for idx,param in enumerate(prarameters):
     try:
         #setup
@@ -89,15 +69,8 @@ for idx,param in enumerate(prarameters):
         np.random.seed(4)
         print('iter {}/{}'.format(idx,len(prarameters)))
 
-        #params
-
-        newsgroups_train = fetch_20newsgroups(subset='train')
-        labels = newsgroups_train.target
-        labels_names = newsgroups_train.target_names
-        #TODO: consider take only body
-        emails = newsgroups_train.data
         emails = emails[:param.max_num]
-        number_of_labels = 20 #TODO magic number
+
         #preprocess
         emails = [pp.clean_text(e) for e in emails]
 
@@ -180,7 +153,8 @@ for idx,param in enumerate(prarameters):
         plt.show()
         '''
     except Exception as e:
-        raise
         print(e)
+        #raise
 
-total_linkage_matrix = anlz.calc_total_linkage_matrix(num_of_documents)
+
+#total_linkage_matrix = anlz.calc_total_linkage_matrix(num_of_documents)
