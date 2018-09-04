@@ -19,7 +19,7 @@ data = load_linkage_table(k)
 sclust = SpectralClustering(affinity='precomputed', n_clusters=k, random_state=4)
 sclust.fit(data)
 
-res = analyze.analyze_clustering(labels[:100],sclust.labels_,k)
+res = analyze.analyze_clustering(labels[:len(sclust.labels_)],sclust.labels_,k)
 print(res.acc)
 print(res.precision)
 print(res.recall)

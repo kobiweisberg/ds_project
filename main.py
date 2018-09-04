@@ -23,7 +23,7 @@ with open(csv_path, 'a') as ff:
 num_of_documents = 11300
 max_df = 0.05
 min_df = 1e-4
-all_k = [20, 50, 200]
+all_k = [20 , 50, 200]
 all_vect = [vect_tfidf, vect_w2v, vect_bow]
 prarameters = []
 for vect, k in itertools.product(all_vect,all_k):
@@ -36,7 +36,7 @@ for vect, k in itertools.product(all_vect,all_k):
         Params(vect, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, k, num_of_documents),
         Params(vect, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, k, num_of_documents),
     ]
-for vect, k in itertools.product(all_vect,all_k):
+for vect, k in itertools.product([vect_tfidf, vect_w2v],all_k):
     prarameters = prarameters + \
     [
         Params(vect, clust_kneams, aff_cosine, link_ward, min_df, max_df, k, num_of_documents),
