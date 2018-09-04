@@ -95,9 +95,9 @@ def analyze_clustering(labels, clusters, number_of_labels):
     return Results(acc, precision, recall, conf_mat, labels_conf_mat, linkage_table)
 
 
-def calc_total_linkage_matrix(number_of_docs):
+def calc_total_linkage_matrix(number_of_docs,k):
     results = load_results()
-    all_link_mat = [res['results'].linkage_table for res in results if res['params'].get_list()[-1] == number_of_docs]
+    all_link_mat = [res['results'].linkage_table for res in results if (res['params'].get_list()[-1] == number_of_docs)]
     total_link = np.zeros((number_of_docs, number_of_docs))
     for link_mat in all_link_mat:
         total_link = total_link + link_mat
