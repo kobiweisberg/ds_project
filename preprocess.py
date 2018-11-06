@@ -31,10 +31,28 @@ def preprocess(docs, nlp, min_length, min_counts, max_counts):
     """
 
     def clean_and_tokenize(doc):
+        doc = doc.replace('.','')
         text = ' '.join(doc.split())  # remove excessive spaces
-        text = nlp(text, tag=True, parse=False, entity=False)
-        #return [t.lemma_ for t in text if t.is_alpha and len(t) > 2 and not t.is_stop]
-        return [t.lower_ for t in text if t.is_alpha and len(t) > 2 and not t.is_stop]  # remove .lemma and add lower case operation
+        #text = ' '.join(text.split('-'))
+        import re
+        #digits = re.compile(r"\d[\d\.\$]*")
+        not_allowed = re.compile(r"[^\s\w<>_]")
+        text_nlp = nlp(text, tag=True, parse=False, entity=False)
+        temp = []
+        for t in text.split():
+            if not_allowed.match(t):
+                continue
+            elif t.isdigit():
+                temp += ['<nnuumm>']
+            else:
+                temp += [t.lower()]
+        return temp
+
+        # text = not_allowed.sub("", digits.sub("<num>", text.lower()))
+        # #return [t.lemma_ for t in text if t.is_alpha and len(t) > 2 and not t.is_stop]
+        # #return [t.lower_ for t in text if t.is_alpha and len(t) > 2 and not t.is_stop]  # remove .lemma and add lower case operation
+        # text = [t for t in text if t.is_alpha and not t.is_stop]
+        # return text
 
     tokenized_docs = [(i, clean_and_tokenize(doc)) for i, doc in tqdm(docs)]
 
@@ -44,20 +62,20 @@ def preprocess(docs, nlp, min_length, min_counts, max_counts):
     print('number of removed short documents:', n_short_docs)
 
     # remove some tokens
-    counts = _count_unique_tokens(tokenized_docs)
-    tokenized_docs = _remove_tokens(tokenized_docs, counts, min_counts, max_counts)
-    n_short_docs = sum(1 for i, doc in tokenized_docs if len(doc) < min_length)
-    tokenized_docs = [(i, doc) for i, doc in tokenized_docs if len(doc) >= min_length]
+    counts = _count_unique_tokens(tokenized_docs)  # counts the quantity of each word
+    tokenized_docs = _remove_tokens(tokenized_docs, counts, min_counts, max_counts)  # docs after removal of words with too low\high quantity
+    n_short_docs = sum(1 for i, doc in tokenized_docs if len(doc) < min_length)  # number of short docs
+    tokenized_docs = [(i, doc) for i, doc in tokenized_docs if len(doc) >= min_length]  # docs > min_length
     print('number of additionally removed short documents:', n_short_docs)
 
-    counts = _count_unique_tokens(tokenized_docs)
-    encoder, decoder, word_counts = _create_token_encoder(counts)
+    counts = _count_unique_tokens(tokenized_docs)  # quantity of words that shown in doc in the right amount
+    encoder, decoder, word_counts = _create_token_encoder(counts)  # w2ix
 
     print('\nminimum word count number:', word_counts[-1])
     print('this number can be less than MIN_COUNTS because of document removal')
 
     encoded_docs = _encode(tokenized_docs, encoder)  # all the doc is encoded as indexes instead of words using ix2word
-    return encoded_docs, decoder, word_counts
+    return encoded_docs, decoder, word_counts, encoder
 
 
 def _count_unique_tokens(tokenized_docs):
@@ -81,18 +99,48 @@ def _remove_tokens(tokenized_docs, counts, min_counts, max_counts):
     )
     print('total number of tokens:', total_tokens_count)
 
-    unknown_tokens_count = sum(
-        count for token, count in counts.most_common()
-        if count < min_counts or count > max_counts
-    )
-    print('number of tokens to be removed:', unknown_tokens_count)
+    # unknown_tokens_count = sum(
+    #     count for token, count in counts.most_common()
+    #     if count < min_counts or count > max_counts
+    # )
+    # print('number of tokens to be removed:', unknown_tokens_count)
 
+    # keep = {}
+    # for token, count in counts.most_common():
+    #     keep[token] = count >= min_counts and count <= max_counts
+    #
+    # return [(i, [t for t in doc if keep[t]]) for i, doc in tokenized_docs]
+    # #####################3
     keep = {}
     for token, count in counts.most_common():
-        keep[token] = count >= min_counts and count <= max_counts
+        if count < min_counts:
+            keep[token] = 'less'
+        elif count > max_counts:
+            keep[token] = 'more'
+        else:
+            keep[token] = 'keep'
 
-    return [(i, [t for t in doc if keep[t]]) for i, doc in tokenized_docs]
+    ret = []
+    for i, doc in tokenized_docs:
+        temp = []
+        for t in doc:
+            if keep[t] == 'keep':
+                temp += [t]
+            elif keep[t] == 'less':
+                temp += ['<UNK_less>']
+            else:
+                temp += ['<UNK_more>']
+        ret.append((i, temp))
+    return ret
 
+
+# convert unk_more to unk_less - if we want to do so
+def convert_more_to_less(ret):
+    converted_i = []
+    for i,text_list in ret:
+        converted = [x if x!='<UNK_more>' else '<UNK_less>' for x in text_list]
+        converted_i += (i, converted)
+    return converted_i
 
 def _create_token_encoder(counts):
 
@@ -155,14 +203,14 @@ def main(params):
     #from utils import preprocess, get_windows
 
 
-    MIN_COUNTS = 20
-    MAX_COUNTS = 1800
+    MIN_COUNTS = 5 # 20
+    MAX_COUNTS = 2000 # 1800
     # words with count < MIN_COUNTS
     # and count > MAX_COUNTS
     # will be removed
 
     #MIN_LENGTH = 1
-    MIN_LENGTH = 15
+    MIN_LENGTH = 5 # 15
     # minimum document length
     # (number of words)
     # after preprocessing
@@ -187,16 +235,16 @@ def main(params):
     # store an index with a document
     docs = [(i, doc) for i, doc in enumerate(docs)]
 
-    # preprocess dataset and create windows
+    # preprocess dataset and create windows1
 
-    encoded_docs, decoder, word_counts = preprocess(docs, nlp, MIN_LENGTH, MIN_COUNTS, MAX_COUNTS)
+    encoded_docs, decoder, word_counts, encoder = preprocess(docs, nlp, MIN_LENGTH, MIN_COUNTS, MAX_COUNTS)
     only_encoded_docs = []
     for i,j in encoded_docs:
-        only_encoded_docs.append(j)
+        only_encoded_docs.append(j)  # list of the encoded docs without the doc id
 
     # new ids will be created for the documents.
     # create a way of restoring initial ids:
-    doc_decoder = {i: doc_id for i, (doc_id, doc) in enumerate(encoded_docs)}
+    doc_decoder = {i: doc_id for i, (doc_id, doc) in enumerate(encoded_docs)}  # now we don't have all the docs (len < 15) so new connection between original doc id to running index
 
     """data = []
     # new ids are created here
@@ -233,6 +281,7 @@ def main(params):
         if max_length < len(doc):
             max_length = len(doc)
 
+
     # create masks
     masks = np.zeros([len(doc_decoder), max_length])  # shape [# docs, max length]
     for ind, doc in enumerate(encoded_docs):
@@ -252,6 +301,7 @@ def main(params):
     # save data
     os.chdir(sys.path[-1])
     json.dump(decoder, open(params['output_vocab'], 'w'))
+    json.dump(encoder, open(params['encoder'], 'w'))
     #np.save('decoder.npy', decoder)  # ix2word
     json.dump(doc_decoder, open(params['output_doc_decoder'], 'w'))
     #np.save('doc_decoder.npy', doc_decoder)  # doc counter to word index
@@ -276,6 +326,7 @@ if __name__ == "__main__":
   # input json
   parser.add_argument('--output_vocab', default='vocab.json', help='output json file')
   parser.add_argument('--output_doc_decoder', default='doc_decoder.json', help='output json file')
+  parser.add_argument('--encoder', default='encoder.json', help='encoder json file')
 
   args = parser.parse_args()
   params = vars(args)  # convert to ordinary dict
