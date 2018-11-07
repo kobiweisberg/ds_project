@@ -56,9 +56,6 @@ class Dataloader(data.Dataset):
         with open('vocab.json', 'rb') as f:
             self.decoder = json.load(f)
 
-        with open('encoder.json', 'rb') as f:
-            self.encoder = json.load(f)
-
         with open('doc_decoder.json', 'rb') as f:
             self.doc_decoder = json.load(f)
 
