@@ -31,13 +31,13 @@ def preprocess(docs, nlp, min_length, min_counts, max_counts):
     """
 
     def clean_and_tokenize(doc):
-        doc = doc.replace('.','')
+        doc = doc.replace('.','').replace('\n',' <eos> ')
         text = ' '.join(doc.split())  # remove excessive spaces
         #text = ' '.join(text.split('-'))
         import re
         #digits = re.compile(r"\d[\d\.\$]*")
         not_allowed = re.compile(r"[^\s\w<>_]")
-        text_nlp = nlp(text, tag=True, parse=False, entity=False)
+        #text_nlp = nlp(text, tag=True, parse=False, entity=False)
         temp = []
         for t in text.split():
             if not_allowed.match(t):

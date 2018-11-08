@@ -1,8 +1,6 @@
 import os, sys, re, collections, string, itertools
 from operator import itemgetter as at
 import numpy as np
-import pandas as pd
-from matplotlib import pyplot as plt
 from tqdm import tqdm
 sys.path.append("../python")
 
@@ -19,5 +17,5 @@ def clean_text(text):
     return not_allowed.sub("", digits.sub("<NUM>",text.lower()))
 
 if __name__=='__main__':
-    test_text = 'Hi hagai 3 *** hh jg'
+    test_text = 'Hi hagai 3 *** \nhh jg'
     print(clean_text(test_text))
