@@ -11,10 +11,9 @@ import torch
 from torch.autograd import Variable
 
 #import data
-import LM_model as model
 from LSTM0.dataloader import *
 
-parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 Language Model')
+parser = argparse.ArgumentParser(description='Language Model')
 
 # Model parameters.
 parser.add_argument('--data', type=str, default='./LSTM0/files/',
@@ -59,7 +58,7 @@ input = torch.randint(ntokens, (1, 1), dtype=torch.long).to(device)
 with open(args.outf, 'w') as outf:
     with torch.no_grad():  # no tracking history
         for i in range(args.words):
-            output, hidden = model(input, hidden)
+            output, before_lin, hidden = model(input, hidden)
             word_weights = output.squeeze().div(args.temperature).exp().cpu()
             word_idx = torch.multinomial(word_weights[2:], 1).item()
             input.fill_(word_idx)
