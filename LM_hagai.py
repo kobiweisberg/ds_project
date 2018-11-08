@@ -152,7 +152,7 @@ def evaluate(data_source):
         for doc_ind,doc in enumerate(data_source):
             for i in range(0, doc.size(0) - 1, args.bptt):
                 data, targets = get_batch(doc, i)
-                output, hidden = model(data, hidden)
+                output, before_lin, hidden = model(data, hidden)
                 output_flat = output.view(-1, ntokens)
                 total_loss += len(targets) * criterion(output_flat, targets).item()
                 den += len(targets)
@@ -175,7 +175,7 @@ def train():
             # If we didn't, the model would try backpropagating all the way to start of the dataset.
             hidden = repackage_hidden(hidden)
             model.zero_grad()
-            output, hidden = model(data, hidden)
+            output, before_lin, hidden = model(data, hidden)
             loss = criterion(output.view(-1, ntokens), targets)
             loss.backward()
 
