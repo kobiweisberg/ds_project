@@ -3,13 +3,14 @@ from tqdm import tqdm
 from sklearn.datasets import fetch_20newsgroups
 import numpy as np
 from tqdm import tqdm
-#import spacy
+import spacy
 from gensim import corpora, models
 import os
 import sys
 import pickle
 import argparse
 import json
+import re
 
 def preprocess(docs, nlp, min_length, min_counts, max_counts):
     """Tokenize, clean, and encode documents.
@@ -30,22 +31,25 @@ def preprocess(docs, nlp, min_length, min_counts, max_counts):
             in all documents in docs.
     """
 
-    def clean_and_tokenize(doc):
-        doc = doc.replace('.','').replace('\n',' <eos> ')
+    def clean_and_tokenize(doc,lemmatize=False):
+        doc = doc.replace('.','')
         text = ' '.join(doc.split())  # remove excessive spaces
         #text = ' '.join(text.split('-'))
-        import re
         #digits = re.compile(r"\d[\d\.\$]*")
         not_allowed = re.compile(r"[^\s\w<>_]")
-        #text_nlp = nlp(text, tag=True, parse=False, entity=False)
+        text = re.sub(r'[^\w\s]', '', text)
+        text_nlp = nlp(text, disable = ['parser','ner'])
         temp = []
-        for t in text.split():
-            if not_allowed.match(t):
+        for t in text_nlp:
+            if not_allowed.match(t.lower_):
                 continue
-            elif t.isdigit():
+            elif t.lower_.isdigit():
                 temp += ['<nnuumm>']
             else:
-                temp += [t.lower()]
+                if lemmatize:
+                    temp += [t.lemma_]
+                else:
+                    temp += [t.lower_]
         return temp
 
         # text = not_allowed.sub("", digits.sub("<num>", text.lower()))
@@ -221,8 +225,8 @@ def main(params):
 
     # load nlp model
 
-    #nlp = spacy.load('en')
-    nlp = None ## TODO:spacy
+    nlp = spacy.load('en')
+    #nlp = None ## TODO:spacy
     # Load dataset
 
     #dataset = fetch_20newsgroups(subset='all', remove=('headers', 'footers', 'quotes'))
@@ -237,7 +241,7 @@ def main(params):
 
     # preprocess dataset and create windows1
 
-    encoded_docs, decoder, word_counts, encoder = preprocess(docs, nlp, MIN_LENGTH, MIN_COUNTS, MAX_COUNTS)
+    encoded_docs, decoder, word_counts, encoder = preprocess(docs, nlp, MIN_LENGTH, MIN_COUNTS, MAX_COUNTS,params['lemma'])
     only_encoded_docs = []
     for i,j in encoded_docs:
         only_encoded_docs.append(j)  # list of the encoded docs without the doc id
@@ -327,6 +331,7 @@ if __name__ == "__main__":
   parser.add_argument('--output_vocab', default='vocab.json', help='output json file')
   parser.add_argument('--output_doc_decoder', default='doc_decoder.json', help='output json file')
   parser.add_argument('--encoder', default='encoder.json', help='encoder json file')
+  parser.add_argument('-l-','--lemma',help='use lemmas instead of words',action='store_true')
 
   args = parser.parse_args()
   params = vars(args)  # convert to ordinary dict
