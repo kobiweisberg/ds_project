@@ -25,7 +25,8 @@ max_df = 0.05
 min_df = 1e-4
 all_k = [20 , 50, 200]
 all_vect = [vect_tfidf, vect_w2v, vect_bow]
-prarameters = []
+prarameters = [Params(all_vect[0], clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents)]
+'''
 for vect, k in itertools.product(all_vect,all_k):
     prarameters = prarameters + \
     [
@@ -41,6 +42,7 @@ for vect, k in itertools.product([vect_tfidf, vect_w2v],all_k):
     [
         Params(vect, clust_kneams, aff_cosine, link_ward, min_df, max_df, k, num_of_documents),
     ]
+'''
 files = os.listdir(os.path.curdir)
 for file in files:
     if file.startswith('linkage_table'):
