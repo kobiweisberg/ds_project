@@ -26,6 +26,7 @@ def create_vec(opt):
     model.load_state_dict(torch.load(checkpoint_path))
     print("model load from {}".format(checkpoint_path))
     vecs_rep_all = torch.zeros(len(docs_length),opt.filter_num).detach()
+    start = time.time()
     for iteration in range(len(docs_length)):
             batch_docs, batch_masks, batch_labels, finished = get_batch(encoded_docs, docs_length, labels, opt, iteration)
             torch.cuda.synchronize()
@@ -34,7 +35,8 @@ def create_vec(opt):
             torch.cuda.synchronize()
             if iteration % round(len(docs_length)/10)==0:
                 print('finished {}/{} that\'s {} % ' .format(iteration+1, len(docs_length), 100*round((iteration+1)/len(docs_length),2)))
-
+            # if iteration % round(len(docs_length) / 100) == 0:
+            #     print('iteration is {} and time is {}' .format(iteration, time.time()-start))
     if opt.save_file:  # default is not saving
         np.save('vecs_rep_all.npy', vecs_rep_all.detach().numpy())
     return vecs_rep_all.detach().numpy()
