@@ -18,7 +18,7 @@ parser = argparse.ArgumentParser(description='Language Model')
 # Model parameters.
 parser.add_argument('--data', type=str, default='./LSTM0/files/',
                     help='location of the data corpus')
-parser.add_argument('--checkpoint', type=str, default='./model.pt',
+parser.add_argument('--checkpoint', type=str, default='./model.pth',
                     help='model checkpoint to use')
 parser.add_argument('--outf', type=str, default='generated.txt',
                     help='output file for generated text')
@@ -46,7 +46,7 @@ if args.temperature < 1e-3:
     parser.error("--temperature has to be greater or equal 1e-3")
 
 with open(args.checkpoint, 'rb') as f:
-    model = torch.load(f).to(device)
+    model = torch.load(f,map_location='cpu').to(device)
 model.eval()
 
 #corpus = data.Corpus(args.data)

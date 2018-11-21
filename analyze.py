@@ -1,6 +1,50 @@
-import numpy as np
 from sklearn.metrics import confusion_matrix
 from utils import load_results
+import numpy as np
+import matplotlib.pyplot as plt
+import matplotlib.colors as colors
+import matplotlib.cm as cm
+from sklearn import manifold
+import dataframe as df
+def plot_embedding(X,y, title=None):
+    x_min, x_max = np.min(X, 0), np.max(X, 0)
+    X = (X - x_min) / (x_max - x_min)
+
+    plt.figure()
+    ax = plt.subplot(111)
+    for i in range(X.shape[0]):
+        plt.text(X[i, 0], X[i, 1], '.',
+                 color=plt.cm.Set1(y[i] / 10.),
+                 fontdict={'weight': 'bold', 'size': 9})
+
+    '''if hasattr(offsetbox, 'AnnotationBbox'):
+        # only print thumbnails with matplotlib > 1.0
+        shown_images = np.array([[1., 1.]])  # just something big
+        for i in range(X.shape[0]):
+            dist = np.sum((X[i] - shown_images) ** 2, 1)
+            if np.min(dist) < 4e-3:
+                # don't show points that are too close
+                continue
+            shown_images = np.r_[shown_images, [X[i]]]
+            imagebox = offsetbox.AnnotationBbox(
+                offsetbox.OffsetImage(digits.images[i], cmap=plt.cm.gray_r),
+                X[i])
+            ax.add_artist(imagebox)'''
+    plt.xticks([]), plt.yticks([])
+    if title is not None:
+        plt.title(title)
+
+def tsne_plot(X,y,random_state=0):
+    tsne = manifold.TSNE(n_components=2, init='pca', random_state=random_state)
+    X_tsne = tsne.fit_transform(X)
+    #Xdf=df.DataFrame(data=X_tsne,index=y)
+    colormap = cm.viridis
+    colorlist = [colors.rgb2hex(colormap(i)) for i in np.linspace(0, 0.9, len(set(y))+1)]
+    fig, ax = plt.subplots()
+    for i,c in enumerate(colorlist):
+            ax.scatter(X_tsne[y==i, 0], X_tsne[y==i, 1], s=50, linewidth=0.1,c=c)
+    #plot_embedding(X_tsne,y,"t-SNE")
+    plt.show()
 
 def evaluate_many2one(mat, num_of_labels):
     mat = mat[:num_of_labels,:]
@@ -105,14 +149,14 @@ def calc_total_linkage_matrix(number_of_docs,k):
 
 
 if __name__=='__main__':
-    import matplotlib.pyplot as plt
+    '''import matplotlib.pyplot as plt
     import pickle
-    '''with open('results/','rb') as rf:
+    with open('results/','rb') as rf:
         mat = pickle.load(rf)
     ret = evaluate_many2one(mat,20)
     plt.figure(1)
     plt.plot(range(1,21),ret,'*')
-    plt.show()'''
+    plt.show()
     #a = np.array([[38,2,200],[47,53,4]])
     #print(evaluate_many2one_conf_mat(a,2))
     #a = np.array([1, 2, 1, 1, 0, 1, 0])
@@ -124,4 +168,5 @@ if __name__=='__main__':
     for link_mat in all_link_mat:
         total_link = total_link + link_mat
 
-    print(total_link)
+    print(total_link)'''
+    tsne_plot(np.array([[1,2,3],[2,5,6],[-8,-2,-1]]),np.array([1, 1, 2]))
