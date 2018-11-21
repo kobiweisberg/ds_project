@@ -23,6 +23,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.optim as optim
 import math
+from copy import deepcopy
 
 class Dataloader(data.Dataset):
 
@@ -82,11 +83,17 @@ def get_batch(encoded_docs, docs_length, labels, opt, iteration, train_flag=True
         # get the maximum length doc in the current batch
         max_len = 1
         iter_in_epoch = math.floor(len(encoded_docs)/opt.batch_size)
-        iteration = (iteration + 1) % (iter_in_epoch + 1)  # to get the iteration in epoch (no absolute)
+        #iteration = (iteration + 1) % (iter_in_epoch + 1)  # to get the iteration in epoch (no absolute)
+        iteration = (iteration + 1) % (iter_in_epoch)  # to get the iteration in epoch (no absolute)
+        #iteration = (iteration) % (iter_in_epoch)
         start_iter = iteration * opt.batch_size
 
         #if (iteration+1) % (iter_in_epoch) != 0:
-        if iteration != iter_in_epoch:
+        #if iteration != iter_in_epoch:
+        if iteration != 0:
+
+
+
             #batch_docs = encoded_docs[iteration*opt.batch_size: (iteration+1)*opt.batch_size]  # docs for current iteration, [1] - for taking the doc without doc_id
         # curr_len = np.zeros(opt.batch_size)
             for i in range(iteration * opt.batch_size, (iteration + 1) * opt.batch_size):
@@ -107,12 +114,22 @@ def get_batch(encoded_docs, docs_length, labels, opt, iteration, train_flag=True
         else:
             # for last iteration in epoch, take the remain docs
             #batch_docs = encoded_docs[iteration*opt.batch_size:, :][1]  # docs for current iteration
-            for i in range(iteration * opt.batch_size, len(encoded_docs)):
+            if opt.cnn_model:
+                start_range = len(encoded_docs) - 1
+                start_iter = deepcopy(start_range)  # take only last doc
+            else:
+                start_range = iteration * opt.batch_size
+            #for i in range(iteration * opt.batch_size, len(encoded_docs)):
+            for i in range(start_range, len(encoded_docs)):
+
                 curr_len = len(encoded_docs[i])
                 if curr_len > max_len:
                     max_len = curr_len
             # create a torch for the current docs instead of list
-            batch_docs = torch.zeros(len(encoded_docs) - start_iter, max_len)
+            if opt.cnn_model:
+                batch_docs = torch.zeros(1, max_len)
+            else:
+                batch_docs = torch.zeros(len(encoded_docs), max_len)
             for i in range(start_iter, len(encoded_docs)):
                 curr_len = len(encoded_docs[i])
                 batch_docs[i - start_iter, :curr_len] = torch.from_numpy(np.asarray(encoded_docs[i]))
@@ -120,7 +137,10 @@ def get_batch(encoded_docs, docs_length, labels, opt, iteration, train_flag=True
             batch_docs_length = docs_length[iteration*opt.batch_size:]  # masks for current iteration
             batch_labels = torch.from_numpy(labels[iteration*opt.batch_size:])  # labels for current iteration
             finished = 1  # 1 if epoch is finished
-        return batch_docs, batch_docs_length, batch_labels, finished
+        if opt.cnn_model:
+            return batch_docs, batch_docs_length[-1], batch_labels[-1], finished
+        else:
+            return batch_docs, batch_docs_length, batch_labels, finished
     else: # evaluation
 	# get the maximum length doc in the current batch
         max_len = 1
@@ -140,6 +160,9 @@ def get_batch(encoded_docs, docs_length, labels, opt, iteration, train_flag=True
 
 
         return batch_docs, batch_docs_length, batch_labels
+
+
+
 
 
 
