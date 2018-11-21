@@ -7,8 +7,8 @@
 # masks --> [8109, 4608] = [number of docs, max doc length]
 from sklearn.datasets import fetch_20newsgroups
 import numpy as np
-from tqdm import tqdm
-import spacy
+#from tqdm import tqdm
+#import spacy
 import os
 import sys
 import torch
