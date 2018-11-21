@@ -41,6 +41,8 @@ def parse_opt():
                     help='model name')
     parser.add_argument('--load_model_name', type=str, default='/model_conv_5e-4.pth',
                         help='model name')
+    parser.add_argument('--save_file', type=int, default=0,
+                        help='save or don\'t save all encoded doc vectors')
 
     args = parser.parse_args()
     return args

@@ -15,6 +15,7 @@ import torch.nn as nn
 from torch.autograd import Variable
 import torch.optim as optim
 import time
+import numpy as np
 from six.moves import cPickle
 #import collections
 #import matplotlib.pyplot as plt
@@ -23,24 +24,14 @@ os.environ["CUDA_VISIBLE_DEVICES"] = '3'
 
 def create_vec(opt):
 
-    # load data
-    val_accuracy_best = 0 # compare the best val to decide if to save new model
-    val_bch_sz = 1  # validation batch size - 1 for conv model 30 for regular model
-    n_val = 2000  # determine train\val set sizes
-    histories_name = 'histories_conv_model' # histories_conv_model or hostories
     load_model_name = opt.load_model_name  # model_conv or model
     print('model name is {}' .format(load_model_name))
 
     loader = Dataloader(opt)
     opt.vocab_size = len(loader.decoder)  # get vocab size
 
-    encoded_docs, docs_length, labels = loader.only_encoded_docs[:], loader.docs_length[:], loader.labels[:]
+    encoded_docs, docs_length, labels = loader.only_encoded_docs[:11], loader.docs_length[:11], loader.labels[:11]
 
-    # unique, counts = np.unique(val_labels, return_counts=True)  # count occurances from each label
-    # prop = dict(zip(unique, counts))
-    # plt.scatter(prop.keys(), prop.values())
-    #plt.show()
-    #collections.Counter(val_labels)  - the same but it isn't by order
 
 
     # load model
@@ -57,7 +48,7 @@ def create_vec(opt):
     print("model load from {}".format(checkpoint_path))
     iteration = 0  # set the iteration var, inside the while loop it will change every iteration
     epoch = 1
-    vecs_rep_all = torch.zeros(len(docs_length),opt.filter_num)
+    vecs_rep_all = torch.zeros(len(docs_length),opt.filter_num).detach()
     for iteration in range(len(docs_length)):
             start = time.time()
             # Load data from train split (0)
@@ -71,9 +62,11 @@ def create_vec(opt):
             vecs_rep_all[iteration] = vec_rep
 
             torch.cuda.synchronize()
-
-
-
+            if iteration % round(len(docs_length)/10)==0:
+                print('finished {}/{} that\'s {} % ' .format(iteration+1, len(docs_length), 100*round((iteration+1)/len(docs_length),2)))
+    if opt.save_file:  # default is not saving
+        np.save('vecs_rep_all.npy', vecs_rep_all.detach().numpy())
+    return vecs_rep_all.detach().numpy()
 
         #torch.cuda.empty_cache()
 
