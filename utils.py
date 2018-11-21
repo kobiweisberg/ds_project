@@ -69,7 +69,7 @@ def save_results(params, results):
         data = np.zeros((params.max_num,params.max_num))
     new_data = data + results.linkage_table
     np.savetxt(csv_table_k, new_data, fmt = '%d' ,delimiter=",")
-
+    return results.get_list()[0]
 
 def load_linkage_table(k):
     csv_table_k = 'linkage_table_' + str(k) + '.csv'

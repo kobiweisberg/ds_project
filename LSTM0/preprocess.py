@@ -3,7 +3,7 @@ from tqdm import tqdm
 from sklearn.datasets import fetch_20newsgroups
 import numpy as np
 from tqdm import tqdm
-import spacy
+#import spacy
 from gensim import corpora, models
 import os
 import sys
@@ -221,8 +221,8 @@ def main(params):
 
     # load nlp model
 
-    nlp = spacy.load('en')
-
+    #nlp = spacy.load('en')
+    nlp = None ## TODO:spacy
     # Load dataset
 
     #dataset = fetch_20newsgroups(subset='all', remove=('headers', 'footers', 'quotes'))
