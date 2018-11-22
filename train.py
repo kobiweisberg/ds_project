@@ -27,7 +27,7 @@ def train(opt):
     val_accuracy_best = 0 # compare the best val to decide if to save new model
     val_bch_sz = 1  # validation batch size - 1 for conv model 30 for regular model
     n_val = 2000  # determine train\val set sizes
-    histories_name = 'histories_conv_model' # histories_conv_model or hostories
+    histories_name = 'histories_conv_model' + opt.model_name # histories_conv_model or hostories
     model_name = 'model_conv_' + opt.model_name  # model_conv or model
     print('model name is {} \nwight decay is {}' .format(model_name, opt.weight_decay))
     loader = Dataloader(opt)
@@ -106,7 +106,8 @@ def train(opt):
                 loss, val_accuracy = model(batch_docs, batch_masks, batch_labels, iteration, train_flag=False)
                 val_loss_sum += len(batch_labels)*loss.data  # sum of val loss of specific batch and sum it over all val set
                 val_accuracy_sum += len(batch_labels)*val_accuracy.data # same as above for accuracy
-                print('validation - iteration {} from {}'  .format(val_iter, val_iters))
+                if val_iter % 20 == 0:
+                    print('validation - iteration {} from {}'  .format(val_iter, val_iters))
 
                 #val_loss = loss.data[0]
             val_loss = val_loss_sum/val_iters  # average over all val set
