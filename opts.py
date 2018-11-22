@@ -17,7 +17,7 @@ def parse_opt():
                         help='learning rate')
     # parser.add_argument('--weight_decay', type=float, default=0,
     #                 help='weight_decay')
-    parser.add_argument('--weight_decay', type=float, default=1e-3,
+    parser.add_argument('--weight_decay', type=float, default=5e-4,
                                          help='weight_decay')
     parser.add_argument('--grad_clip', type=float, default=0.1, #5.,
                     help='clip gradients at this value')
@@ -37,7 +37,7 @@ def parse_opt():
                         help='length of cnn filter')
     parser.add_argument('--filter_num', type=float, default=100,
                         help='number of cnn filters (from the same size')
-    parser.add_argument('--model_name', type=str, default='',
+    parser.add_argument('--model_name', type=str, default='_model_conv_5e-4.pth',
                     help='model name')
     parser.add_argument('--load_model_name', type=str, default='/model_conv_5e-4.pth',
                         help='model name')
