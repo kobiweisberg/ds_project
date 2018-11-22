@@ -65,7 +65,7 @@ num_of_documents = len(corpus.only_encoded_docs)
 #min_df = 1e-4
 all_k = [20 , 50, 200]
 all_vect = [vect_tfidf, vect_w2v, vect_bow]
-prarameters = [Params(vect_bow, clust_hirarchical, aff_euclidean, link_ward, 0, np.inf, 20, num_of_documents)]
+prarameters = [Params(vect_w2v, clust_hirarchical, aff_euclidean, link_ward, 0, np.inf, 20, num_of_documents)]
 '''for vect, k in itertools.product(all_vect,all_k):
     prarameters = prarameters + \
     [
@@ -95,9 +95,8 @@ labels = corpus.labels
 #labels_names = newsgroups_train.target_names
 #TODO: consider take only body
 emails = [' '.join([corpus.decoder[str(w)] for w in doc]) for doc in corpus.only_encoded_docs]
-with open('example.txt','w') as wf:
-    print(emails[200])
-    wf.write(emails[200])
+with open('../../example.txt','w') as wf:
+    wf.write(emails[299])
 number_of_labels = 20 #TODO magic number
 
 
@@ -135,9 +134,7 @@ for idx,param in enumerate(prarameters):
         elif(param.vectorizing == vect_w2v):
             #Word2Vec
             emails_representation = vr.BOW_w2v(emails)
-        print(type(emails_representation))
-        print(len(emails_representation))
-        anlz.tsne_plot(emails_representation, labels, args.seed)
+        #anlz.tsne_plot(emails_representation, labels, args.seed)
         print('clustering...')
         ##clustering
         if(param.clustering == clust_kneams):
