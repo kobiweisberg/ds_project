@@ -2,6 +2,10 @@ import argparse
 
 import torch
 from torch.autograd import Variable
+from sklearn.manifold import TSNE as tsne
+import pandas as pd
+import seaborn as sns
+import matplotlib.pyplot as plt
 
 #import data
 from LSTM0.dataloader import *
@@ -39,6 +43,16 @@ def get_docs_repr(model,data):
 
     return np.stack(docs_representation)
 
+def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=0.3):
+    df = pd.DataFrame({'label':labels})
+    print('compute tsne with perplexity {} and seed {}'.format(perplexity,seed))
+    tsne_components = tsne(n_components=2,perplexity=perplexity,random_state=seed)
+    transformed = tsne_components.fit_transform(high_dim_repr)
+    df['c1'] = transformed[:, 0]
+    df['c2'] = transformed[:, 1]
+    sns.scatterplot(data=df,x='c1',y='c2',hue='label',alpha=alpha)
+    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+    plt.show()
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Language Model')
@@ -69,8 +83,9 @@ if __name__=='__main__':
 
     corpus = Dataloader(args)
     ntokens = len(corpus.decoder)
+    labels_names = [corpus.target_names[x] for x in corpus.labels]
     data = batchify(corpus.only_encoded_docs, 1)
     aa = get_docs_repr(model,data)
-    print(type(aa))
-    print(aa.shape)
+
+    plot_tsne(aa, labels_names, seed=4, perplexity=30, alpha=0.3)
     pass
