@@ -106,6 +106,7 @@ class DocVec(nn.Module):
         self.drop_prob_lm = opt.drop_prob_lm
         self.filter_len = opt.filter_len
         self.filter_num = opt.filter_num
+        self.cuda_flag = opt.cuda_flag
 
         # word embedding before lstm
         self.embed = nn.Sequential(nn.Embedding(self.vocab_size, self.input_encoding_size),
@@ -156,13 +157,20 @@ class DocVec(nn.Module):
 
         for i in range(docs.size(1)):
             it = docs[:, i].clone()
-            it = it.type(torch.int64).cuda()
+            if self.cuda_flag:
+                it = it.type(torch.int64).cuda()
+            else:
+                it = it.type(torch.int64).cpu()
             xt = self.embed(it)
             xt = xt.unsqueeze(1)
             output, state = self.lstm(xt, state)
 
             outputs[0,i,:] = output.squeeze(0).clone()  # each output batch size is one, each column represent a word
-        outputs = self.conv(outputs.unsqueeze(0))
+        if self.cuda_flag:
+            outputs = self.conv(outputs.unsqueeze(0))
+        else:
+            outputs = self.conv(outputs.unsqueeze(0).cpu())
+        #outputs = self.conv(outputs.unsqueeze(0))
         outputs = self.max_pool(outputs.squeeze(-1))
         if eval_flag == True:
             return torch.transpose(outputs.squeeze(0), 0, 1)

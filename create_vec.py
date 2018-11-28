@@ -13,9 +13,9 @@ def create_vec():
 
     parser.add_argument('--max_epochs', type=int, default=50,
                     help='number of epochs')
-    parser.add_argument('--input_encoding_size', type=int, default=256, # 512
+    parser.add_argument('--input_encoding_size', type=int, default=512, # 256
                         help='the encoding size of each token in the vocabulary, and the image.')
-    parser.add_argument('--rnn_size', type=int, default=256,  # 512
+    parser.add_argument('--rnn_size', type=int, default=512,
                         help='size of the rnn in number of hidden nodes in each layer')
     parser.add_argument('--num_layers', type=int, default=1,
                         help='number of layers in the RNN')
@@ -47,10 +47,12 @@ def create_vec():
                         help='number of cnn filters (from the same size')
     parser.add_argument('--model_name', type=str, default='',
                     help='model name')
-    parser.add_argument('--load_model_name', type=str, default='/model_conv_5e-4.pth',
+    parser.add_argument('--load_model_name', type=str, default='/model_conv_filter_5_no_mlp.pth',
                         help='model name')
-    parser.add_argument('--save_file', type=int, default=0,
+    parser.add_argument('--save_file', type=int, default=1,
                         help='save or don\'t save all encoded doc vectors')
+    parser.add_argument('--cuda_flag', type=int, default=0,
+                        help='if 1 use cuda')
 
     opt = parser.parse_args()
 
@@ -66,7 +68,11 @@ def create_vec():
         model = DocEncoder.DocVec(opt)
     else:
         model = DocEncoder.DocEncoder(opt)
-    model.cuda()
+    if opt.cuda_flag:
+        model.gpu()
+    else:
+        model.cpu()
+
     # Assure in training mode
     model.eval()
     # load model
