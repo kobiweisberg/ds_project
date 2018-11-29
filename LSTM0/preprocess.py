@@ -12,7 +12,7 @@ import argparse
 import json
 import re
 
-def preprocess(docs, nlp, min_length, min_counts, max_counts):
+def preprocess(docs, nlp, min_length, min_counts, max_counts,number_of_common_to_ignore):
     """Tokenize, clean, and encode documents.
 
     Arguments:
@@ -32,7 +32,7 @@ def preprocess(docs, nlp, min_length, min_counts, max_counts):
     """
 
     def clean_and_tokenize(doc,lemmatize=False):
-        doc = doc.replace('.','')
+        doc = doc.replace('.',' ')
         text = ' '.join(doc.split())  # remove excessive spaces
         #text = ' '.join(text.split('-'))
         #digits = re.compile(r"\d[\d\.\$]*")
@@ -67,7 +67,7 @@ def preprocess(docs, nlp, min_length, min_counts, max_counts):
 
     # remove some tokens
     counts = _count_unique_tokens(tokenized_docs)  # counts the quantity of each word
-    tokenized_docs = _remove_tokens(tokenized_docs, counts, min_counts, max_counts)  # docs after removal of words with too low\high quantity
+    tokenized_docs = _remove_tokens(tokenized_docs, counts, min_counts, max_counts,number_of_common_to_ignore)  # docs after removal of words with too low\high quantity
     n_short_docs = sum(1 for i, doc in tokenized_docs if len(doc) < min_length)  # number of short docs
     tokenized_docs = [(i, doc) for i, doc in tokenized_docs if len(doc) >= min_length]  # docs > min_length
     print('number of additionally removed short documents:', n_short_docs)
@@ -93,7 +93,7 @@ def _encode(tokenized_docs, encoder):
     return [(i, [encoder[t] for t in doc]) for i, doc in tokenized_docs]
 
 
-def _remove_tokens(tokenized_docs, counts, min_counts, max_counts):
+def _remove_tokens(tokenized_docs, counts, min_counts, max_counts, number_of_common_to_ignore):
     """
     Words with count < min_counts or count > max_counts
     will be removed.
@@ -116,14 +116,20 @@ def _remove_tokens(tokenized_docs, counts, min_counts, max_counts):
     # return [(i, [t for t in doc if keep[t]]) for i, doc in tokenized_docs]
     # #####################3
     keep = {}
+    counter = 0
     for token, count in counts.most_common():
-        if count < min_counts:
+        if counter < number_of_common_to_ignore:
+            if(token!='<nnuumm>'):
+                keep[token] = 'more'
+            else:
+                keep[token] = 'keep'
+        elif count < min_counts:
             keep[token] = 'less'
-        elif count > max_counts:
-            keep[token] = 'more'
+        #elif count > max_counts:
+        #    keep[token] = 'more'
         else:
             keep[token] = 'keep'
-
+        counter += 1
     ret = []
     for i, doc in tokenized_docs:
         temp = []
@@ -207,15 +213,16 @@ def main(params):
     #from utils import preprocess, get_windows
 
 
-    MIN_COUNTS = 5 # 20
+    MIN_COUNTS = 20
     MAX_COUNTS = 2000 # 1800
     MAX_COUNTS_PRECETAGE = 0.01
+    number_of_common_to_ignore = 100 #the 25 most common words will be replaced to <UNK_more>
     # words with count < MIN_COUNTS
     # and count > MAX_COUNTS
     # will be removed
     MIN_NON_ENK_WORDS = 5
     #MIN_LENGTH = 1
-    MIN_LENGTH = 5 # 15
+    MIN_LENGTH = 8 # 15
     # minimum document length
     # (number of words)
     # after preprocessing
@@ -233,6 +240,7 @@ def main(params):
     #dataset = fetch_20newsgroups(subset='all', remove=('headers', 'footers', 'quotes'))
     dataset = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
     docs = dataset['data']
+    raw_data = docs
 
     # number of documents
     len(docs)
@@ -243,12 +251,25 @@ def main(params):
 
     # preprocess dataset and create windows1
     print(np.round(MAX_COUNTS_PRECETAGE*tot_num_of_words))
-    encoded_docs, decoder, word_counts, encoder = preprocess(docs, nlp, MIN_LENGTH, MIN_COUNTS, np.round(MAX_COUNTS_PRECETAGE*tot_num_of_words))
-    only_encoded_docs = []
-    for i,j in encoded_docs:
-        if((len(j) - j.count(0)) > MIN_NON_ENK_WORDS):
-            only_encoded_docs.append(j)  # list of the encoded docs without the doc id
+    encoded_docs, decoder, word_counts, encoder = preprocess(docs, nlp, MIN_LENGTH, MIN_COUNTS, np.round(MAX_COUNTS_PRECETAGE*tot_num_of_words),number_of_common_to_ignore)
 
+
+    new_indxs = []
+    for i, j in encoded_docs:
+        if ((len(j) - j.count(0) - j.count(1) - j.count(2)) > MIN_NON_ENK_WORDS):
+            if (len(j) > MIN_LENGTH):
+                new_indxs.append(i)  # list of the encoded docs without the doc id
+    raw_labels = dataset.target
+    labels = []
+    #encoded_docs_cleaned = []
+    for i in range(len(new_indxs)):  # take only the labels for the docs we are going to use
+        labels.append(dataset.target[new_indxs[i]])
+    only_encoded_docs = [ed[1] for ed in encoded_docs if ed[0] in new_indxs]
+    encoded_docs = [(idx,ed) for ed,idx in zip(only_encoded_docs,new_indxs)]
+
+    #only_encoded_docs = []
+    #for i, j in encoded_docs_cleaned:
+    #    only_encoded_docs.append(j)  # list of the encoded docs without the doc id
     # new ids will be created for the documents.
     # create a way of restoring initial ids:
     doc_decoder = {i: doc_id for i, (doc_id, doc) in enumerate(encoded_docs)}  # now we don't have all the docs (len < 15) so new connection between original doc id to running index
@@ -300,9 +321,7 @@ def main(params):
         if label in doc_ind:
             labels.append(label)
             i += 1"""
-    labels = []
-    for i in range(len(encoded_docs)):  # take only the labels for the docs we are going to use
-        labels.append(dataset.target[encoded_docs[i][0]])
+
 
     # save data
     os.chdir(sys.path[-1])
@@ -323,6 +342,12 @@ def main(params):
 
     with open('only_encoded_docs', 'wb') as fp:
         pickle.dump(only_encoded_docs, fp)
+
+    with open('raw_data', 'wb') as fp:
+        pickle.dump(raw_data, fp)
+
+    with open('raw_labels', 'wb') as fp:
+        pickle.dump(raw_labels, fp)
 
 
 if __name__ == "__main__":
