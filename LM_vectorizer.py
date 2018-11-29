@@ -6,9 +6,10 @@ from sklearn.manifold import TSNE as tsne
 import pandas as pd
 import seaborn as sns
 import matplotlib.pyplot as plt
-
+import matplotlib.cm as cm
 #import data
 from LSTM0.dataloader import *
+from color_constants import *
 #from LM_hagai import repackage_hidden
 
 def repackage_hidden(h):
@@ -43,14 +44,20 @@ def get_docs_repr(model,data):
 
     return np.stack(docs_representation)
 
-def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=0.3):
+def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=1):
+    import color_constants
     df = pd.DataFrame({'label':labels})
     print('compute tsne with perplexity {} and seed {}'.format(perplexity,seed))
     tsne_components = tsne(n_components=2,perplexity=perplexity,random_state=seed)
     transformed = tsne_components.fit_transform(high_dim_repr)
     df['c1'] = transformed[:, 0]
     df['c2'] = transformed[:, 1]
-    sns.scatterplot(data=df,x='c1',y='c2',hue='label',alpha=alpha)
+    colormap = cm.viridis
+    #colorlist = [colors.rgb2hex(colormap(i)) for i in np.linspace(0, 0.9, len(set(y)) + 1)]
+    a = color_constants.colors(n=20)
+    current_palette = sns.color_palette(a)
+    #sns.palplot(current_palette)
+    sns.scatterplot(data=df,x='c1',y='c2',hue='label',alpha=alpha, palette=current_palette)
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
     plt.show()
 
@@ -89,3 +96,4 @@ if __name__=='__main__':
 
     plot_tsne(aa, labels_names, seed=4, perplexity=30, alpha=0.3)
     pass
+
