@@ -1,10 +1,10 @@
 from sklearn.datasets import fetch_20newsgroups
-from pprint import pprint
+'''from pprint import pprint
 import os
 import pickle
 import numpy as np
 import matplotlib.pyplot as plt
-import time
+import time'''
 import itertools
 # our imports
 from utils import *
@@ -13,21 +13,60 @@ import vectorizer as vr
 import cluster as clst
 import analyze as anlz
 import warnings
+import argparse
+
+import torch
+from torch.autograd import Variable
+
+#import data
+from LSTM0.dataloader import *
+#from LM_hagai import repackage_hidden
+
+def repackage_hidden(h):
+    """Wraps hidden states in new Tensors, to detach them from their history."""
+    if isinstance(h, torch.Tensor):
+        return h.detach()
+    else:
+        return tuple(repackage_hidden(v) for v in h)
+
+parser = argparse.ArgumentParser(description='Language Model')
+
+# Model parameters.
+parser.add_argument('--data', type=str, default='./LSTM0/files/',
+                    help='location of the data corpus')
+parser.add_argument('--checkpoint', type=str, default='../../model.pth',
+                    help='model checkpoint to use')
+parser.add_argument('--outf', type=str, default='generated.txt',
+                    help='output file for generated text')
+parser.add_argument('--seed', type=int, default=1111,
+                    help='random seed')
+parser.add_argument('--cuda', action='store_true',
+                    help='use CUDA')
+args = parser.parse_args()
+
+torch.manual_seed(args.seed)
+if torch.cuda.is_available():
+    if not args.cuda:
+        print("WARNING: You have a CUDA device, so you should probably run with --cuda")
+
+device = torch.device("cuda" if args.cuda else "cpu")
+
+with open(args.checkpoint, 'rb') as f:
+    model = torch.load(f,map_location='cpu').to(device)
+model.eval()
+
+corpus = Dataloader(args)
+ntokens = len(corpus.decoder)
 
 
-with open(csv_path, 'a') as ff:
-    wr = csv.writer(ff, dialect='excel')
-    wr.writerow(['time', 'vectorizer', 'clustering', 'distance_metric', 'linkage', 'min_df', 'max_df', 'k', 'num_of_documents'])
 
-
-num_of_documents = 11300
-max_df = 0.05
-min_df = 1e-4
+num_of_documents = len(corpus.only_encoded_docs)
+#max_df = 0.05
+#min_df = 1e-4
 all_k = [20 , 50, 200]
 all_vect = [vect_tfidf, vect_w2v, vect_bow]
-prarameters = [Params(all_vect[0], clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents)]
-'''
-for vect, k in itertools.product(all_vect,all_k):
+prarameters = [Params(vect_w2v, clust_hirarchical, aff_euclidean, link_ward, 0, np.inf, 20, num_of_documents)]
+'''for vect, k in itertools.product(all_vect,all_k):
     prarameters = prarameters + \
     [
         Params(vect, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, k, num_of_documents),
@@ -42,7 +81,7 @@ for vect, k in itertools.product([vect_tfidf, vect_w2v],all_k):
     [
         Params(vect, clust_kneams, aff_cosine, link_ward, min_df, max_df, k, num_of_documents),
     ]
-'''
+    '''
 files = os.listdir(os.path.curdir)
 for file in files:
     if file.startswith('linkage_table'):
@@ -50,11 +89,14 @@ for file in files:
 
 #params
 
-newsgroups_train = fetch_20newsgroups(subset='train')
-labels = newsgroups_train.target
-labels_names = newsgroups_train.target_names
+#newsgroups_train = fetch_20newsgroups(subset='train')
+#labels = newsgroups_train.target
+labels = corpus.labels
+#labels_names = newsgroups_train.target_names
 #TODO: consider take only body
-emails = newsgroups_train.data
+emails = [' '.join([corpus.decoder[str(w)] for w in doc]) for doc in corpus.only_encoded_docs]
+with open('../../example.txt','w') as wf:
+    wf.write(emails[299])
 number_of_labels = 20 #TODO magic number
 
 
@@ -74,8 +116,8 @@ for idx,param in enumerate(prarameters):
         emails = emails[:param.max_num]
 
         #preprocess
-        emails = [pp.clean_text(e) for e in emails]
-
+        #emails = [pp.clean_text(e) for e in emails]
+        print('vectorizing...')
         ##vectorizing
         if(param.vectorizing == vect_bow):
             #BOW
@@ -92,8 +134,8 @@ for idx,param in enumerate(prarameters):
         elif(param.vectorizing == vect_w2v):
             #Word2Vec
             emails_representation = vr.BOW_w2v(emails)
-
-
+        #anlz.tsne_plot(emails_representation, labels, args.seed)
+        print('clustering...')
         ##clustering
         if(param.clustering == clust_kneams):
             if(param.affine == 'cosine'):
@@ -115,8 +157,10 @@ for idx,param in enumerate(prarameters):
         results_rand = anlz.analyze_clustering(labels[:param.max_num], random_clst, number_of_labels)
         #print('accuracy: ', results.acc)
         #print('accuracy random labeling: ', results_rand.acc)
+        print('analyzing and saving...')
 
-        save_results(param,results)
+        acc = save_results(param,results)
+        print('accuracy = %f' % results.get_list()[0])
         '''
         #visualization
         plt.figure(1, figsize=(20,20))
@@ -155,8 +199,8 @@ for idx,param in enumerate(prarameters):
         plt.show()
         '''
     except Exception as e:
-        print(e)
-        #raise
+        print('error: %s' %  e)
+        raise
 
 
 #total_linkage_matrix = anlz.calc_total_linkage_matrix(num_of_documents)

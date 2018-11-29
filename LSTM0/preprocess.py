@@ -209,10 +209,11 @@ def main(params):
 
     MIN_COUNTS = 5 # 20
     MAX_COUNTS = 2000 # 1800
+    MAX_COUNTS_PRECETAGE = 0.01
     # words with count < MIN_COUNTS
     # and count > MAX_COUNTS
     # will be removed
-
+    MIN_NON_ENK_WORDS = 5
     #MIN_LENGTH = 1
     MIN_LENGTH = 5 # 15
     # minimum document length
@@ -235,16 +236,18 @@ def main(params):
 
     # number of documents
     len(docs)
-
+    num_of_words = [len(d) for d in docs]
+    tot_num_of_words = sum(num_of_words)
     # store an index with a document
     docs = [(i, doc) for i, doc in enumerate(docs)]
 
     # preprocess dataset and create windows1
-
-    encoded_docs, decoder, word_counts, encoder = preprocess(docs, nlp, MIN_LENGTH, MIN_COUNTS, MAX_COUNTS,params['lemma'])
+    print(np.round(MAX_COUNTS_PRECETAGE*tot_num_of_words))
+    encoded_docs, decoder, word_counts, encoder = preprocess(docs, nlp, MIN_LENGTH, MIN_COUNTS, np.round(MAX_COUNTS_PRECETAGE*tot_num_of_words))
     only_encoded_docs = []
     for i,j in encoded_docs:
-        only_encoded_docs.append(j)  # list of the encoded docs without the doc id
+        if((len(j) - j.count(0)) > MIN_NON_ENK_WORDS):
+            only_encoded_docs.append(j)  # list of the encoded docs without the doc id
 
     # new ids will be created for the documents.
     # create a way of restoring initial ids:
@@ -272,7 +275,6 @@ def main(params):
     #get unigram distribution
     word_counts = np.array(word_counts)
     unigram_distribution = word_counts/sum(word_counts)
-
     #prepare word vectors
 
     vocab_size = len(decoder)  # ix to word
