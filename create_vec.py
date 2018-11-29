@@ -59,7 +59,7 @@ def create_vec(make_plot=False):
 
 
     n_start = 200
-    n_stop = -2000
+    n_stop =  -2000
     load_model_name = opt.load_model_name  # model_conv or model
     print('model name is {}' .format(load_model_name))
     loader = Dataloader(opt)
