@@ -34,7 +34,7 @@ parser = argparse.ArgumentParser(description='Language Model')
 # Model parameters.
 parser.add_argument('--data', type=str, default='./LSTM0/files/',
                     help='location of the data corpus')
-parser.add_argument('--checkpoint', type=str, default='../../model.pth',
+parser.add_argument('--checkpoint', type=str, default='model.pth',
                     help='model checkpoint to use')
 parser.add_argument('--outf', type=str, default='generated.txt',
                     help='output file for generated text')
@@ -57,15 +57,29 @@ model.eval()
 
 corpus = Dataloader(args)
 ntokens = len(corpus.decoder)
-
-
-
 num_of_documents = len(corpus.only_encoded_docs)
-#max_df = 0.05
-#min_df = 1e-4
+labels = corpus.labels
+pp_docs = [' '.join([corpus.decoder[str(w)] for w in doc]) for doc in corpus.only_encoded_docs]
+emails = pp_docs
+#emails = corpus.raw_data
+#labels = corpus.raw_labels
+
+for example_idx in range(20):
+    with open('../../examples/' + str(example_idx) + '.txt','w') as wf:
+        wf.write('Label (pp): %s\n' % corpus.target_names[corpus.labels[example_idx]])
+        wf.write('Label (raw): %s\n' % corpus.target_names[corpus.raw_labels[corpus.encoded_docs[example_idx][0]]])
+        wf.write('\n------------------------------\n')
+        wf.write(pp_docs[example_idx])
+        wf.write('\n------------------------------\n')
+        wf.write(corpus.raw_data[corpus.encoded_docs[example_idx][0]])
+number_of_labels = 20 #TODO magic number
+max_df = 0.05
+min_df = 1e-4
 all_k = [20 , 50, 200]
 all_vect = [vect_tfidf, vect_w2v, vect_bow]
-prarameters = [Params(vect_w2v, clust_hirarchical, aff_euclidean, link_ward, 0, np.inf, 20, num_of_documents)]
+assert (len(emails) == len(labels))
+print(len(emails))
+prarameters = [Params(vect_tfidf, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents)]
 '''for vect, k in itertools.product(all_vect,all_k):
     prarameters = prarameters + \
     [
@@ -86,18 +100,17 @@ files = os.listdir(os.path.curdir)
 for file in files:
     if file.startswith('linkage_table'):
         warnings.warn('warning: csv file already exists')
+        print('delete %s?' % file)
+        ans = input().lower()
+        print(ans)
+        if(ans == 'y'):
+            os.remove(file)
+            print('%s deleted!' % file)
+
 
 #params
 
-#newsgroups_train = fetch_20newsgroups(subset='train')
-#labels = newsgroups_train.target
-labels = corpus.labels
-#labels_names = newsgroups_train.target_names
-#TODO: consider take only body
-emails = [' '.join([corpus.decoder[str(w)] for w in doc]) for doc in corpus.only_encoded_docs]
-with open('../../example.txt','w') as wf:
-    wf.write(emails[299])
-number_of_labels = 20 #TODO magic number
+
 
 
 for idx,param in enumerate(prarameters):
@@ -116,7 +129,7 @@ for idx,param in enumerate(prarameters):
         emails = emails[:param.max_num]
 
         #preprocess
-        #emails = [pp.clean_text(e) for e in emails]
+        emails = [pp.clean_text(e) for e in emails]
         print('vectorizing...')
         ##vectorizing
         if(param.vectorizing == vect_bow):
