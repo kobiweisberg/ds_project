@@ -18,7 +18,7 @@ def repackage_hidden(h):
     else:
         return tuple(repackage_hidden(v) for v in h)
 
-def batchify(corpus, bsz):
+def batchify(corpus, bsz,device):
     c = []
     for data in corpus:
         data = torch.LongTensor(data)
@@ -84,7 +84,7 @@ if __name__=='__main__':
     corpus = Dataloader(args)
     ntokens = len(corpus.decoder)
     labels_names = [corpus.target_names[x] for x in corpus.labels]
-    data = batchify(corpus.only_encoded_docs, 1)
+    data = batchify(corpus.only_encoded_docs, 1,device)
     aa = get_docs_repr(model,data)
 
     plot_tsne(aa, labels_names, seed=4, perplexity=30, alpha=0.3)

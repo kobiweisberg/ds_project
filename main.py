@@ -14,6 +14,7 @@ import cluster as clst
 import analyze as anlz
 import warnings
 import argparse
+from LM_vectorizer import batchify,plot_tsne,get_docs_repr
 
 import torch
 from torch.autograd import Variable
@@ -65,7 +66,7 @@ emails = pp_docs
 #labels = corpus.raw_labels
 
 for example_idx in range(20):
-    with open('../../examples/' + str(example_idx) + '.txt','w') as wf:
+    with open('/home/lab/taitelh/PycharmProjects/ds_project/results_hagai/examples/' + str(example_idx) + '.txt','w') as wf:
         wf.write('Label (pp): %s\n' % corpus.target_names[corpus.labels[example_idx]])
         wf.write('Label (raw): %s\n' % corpus.target_names[corpus.raw_labels[corpus.encoded_docs[example_idx][0]]])
         wf.write('\n------------------------------\n')
@@ -79,7 +80,7 @@ all_k = [20 , 50, 200]
 all_vect = [vect_tfidf, vect_w2v, vect_bow]
 assert (len(emails) == len(labels))
 print(len(emails))
-prarameters = [Params(vect_tfidf, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents)]
+prarameters = [Params(vect_LM, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents)]
 '''for vect, k in itertools.product(all_vect,all_k):
     prarameters = prarameters + \
     [
@@ -129,7 +130,7 @@ for idx,param in enumerate(prarameters):
         emails = emails[:param.max_num]
 
         #preprocess
-        emails = [pp.clean_text(e) for e in emails]
+        #emails = [pp.clean_text(e) for e in emails]
         print('vectorizing...')
         ##vectorizing
         if(param.vectorizing == vect_bow):
@@ -147,6 +148,9 @@ for idx,param in enumerate(prarameters):
         elif(param.vectorizing == vect_w2v):
             #Word2Vec
             emails_representation = vr.BOW_w2v(emails)
+        elif param.vectorizing == vect_LM:
+            data = batchify(corpus.only_encoded_docs, 1, device)
+            emails_representation = get_docs_repr(model, data)
         #anlz.tsne_plot(emails_representation, labels, args.seed)
         print('clustering...')
         ##clustering
