@@ -28,7 +28,7 @@ parser.add_argument('--output_dir', type=str,
 args = parser.parse_args()
 input_dir = args.input_dir
 output_dir = args.output_dir
-history_file_name = 'histories.pkl'
+history_file_name = 'histories_conv_model_filter_5_no_mlp.pkl'
 
 # histories file
 
