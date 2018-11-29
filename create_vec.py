@@ -5,9 +5,10 @@ import torch
 import time
 import numpy as np
 import argparse
+import seaborn as sns
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '3'
-def create_vec():
+def create_vec(make_plot=False):
 
     parser = argparse.ArgumentParser()
 
@@ -51,25 +52,26 @@ def create_vec():
                         help='model name')
     parser.add_argument('--save_file', type=int, default=1,
                         help='save or don\'t save all encoded doc vectors')
-    parser.add_argument('--cuda_flag', type=int, default=0,
+    parser.add_argument('--cuda_flag', type=int, default=1,
                         help='if 1 use cuda')
 
     opt = parser.parse_args()
 
 
-
+    n_start=200
+    n_stop=-2000
     load_model_name = opt.load_model_name  # model_conv or model
     print('model name is {}' .format(load_model_name))
     loader = Dataloader(opt)
     opt.vocab_size = len(loader.decoder)  # get vocab size
-    encoded_docs, docs_length, labels = loader.only_encoded_docs[:], loader.docs_length[:], loader.labels[:]
+    encoded_docs, docs_length, labels = loader.only_encoded_docs[n_start:n_stop], loader.docs_length[n_start:n_stop], loader.labels[n_start:n_stop]
     # load model
     if opt.cnn_model:
         model = DocEncoder.DocVec(opt)
     else:
         model = DocEncoder.DocEncoder(opt)
     if opt.cuda_flag:
-        model.gpu()
+        model.cuda()
     else:
         model.cpu()
 
@@ -93,8 +95,17 @@ def create_vec():
             #     print('iteration is {} and time is {}' .format(iteration, time.time()-start))
     if opt.save_file:  # default is not saving
         np.save('vecs_rep_all.npy', vecs_rep_all.detach().numpy())
+    if make_plot:
+        #corpus = Dataloader(args)
+        labels_names = [loader.target_names[x] for x in labels]
+        plot_tsne(vecs_rep_all.detach().numpy(), labels_names, seed=4, perplexity=30, alpha=0.3)
     return vecs_rep_all.detach().numpy()
 
 #opt = opts.parse_opt()
 #create_vec(opt)
-create_vec()
+#create_vec()
+
+if __name__=='__main__':
+    from LM_vectorizer import plot_tsne
+    vecs = create_vec(make_plot=True)
+
