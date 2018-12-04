@@ -20,7 +20,7 @@ import torch
 from torch.autograd import Variable
 
 #import data
-from LSTM0.dataloader import *
+from dataloader import *
 #from LM_hagai import repackage_hidden
 
 def repackage_hidden(h):
