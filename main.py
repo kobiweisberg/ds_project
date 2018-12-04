@@ -74,13 +74,13 @@ for example_idx in range(20):
         wf.write('\n------------------------------\n')
         wf.write(corpus.raw_data[corpus.encoded_docs[example_idx][0]])
 number_of_labels = 20 #TODO magic number
-max_df = 0.05
-min_df = 1e-4
+max_df = 1.#0.05
+min_df = 0.#1e-4
 all_k = [20 , 50, 200]
 all_vect = [vect_tfidf, vect_w2v, vect_bow]
 assert (len(emails) == len(labels))
 print(len(emails))
-prarameters = [Params(vect_LM, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents)]
+prarameters = [Params(vect_bow, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents)]
 '''for vect, k in itertools.product(all_vect,all_k):
     prarameters = prarameters + \
     [
