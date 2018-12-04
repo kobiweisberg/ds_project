@@ -172,12 +172,14 @@ for idx,param in enumerate(prarameters):
         random_clst = np.random.randint(0, param.k, param.max_num)
         results = anlz.analyze_clustering(labels[:param.max_num],clusters,number_of_labels)
         results_rand = anlz.analyze_clustering(labels[:param.max_num], random_clst, number_of_labels)
+        results_super_class = anlz.analyze_clustering(corpus.super_class_labels[:param.max_num],clusters,number_of_labels)
         #print('accuracy: ', results.acc)
         #print('accuracy random labeling: ', results_rand.acc)
         print('analyzing and saving...')
 
         acc = save_results(param,results)
         print('accuracy = %f' % results.get_list()[0])
+        print('accuracy by super_class= %f' % results_super_class.get_list()[0])
         '''
         #visualization
         plt.figure(1, figsize=(20,20))
