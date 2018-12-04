@@ -60,7 +60,7 @@ def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=0.3):
             plt.figure(i+1000)
             sns.scatterplot(data=df, x='c1', y='c2', hue='label_{}'.format(i), alpha=alpha)
             plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        plt.show(block=False)
+        plt.show()
     #df = pd.DataFrame({'label':labels})
     elif isinstance(labels,list):
         print('tsne by one set of labels')
@@ -106,6 +106,6 @@ if __name__=='__main__':
     aa = get_docs_repr(model,data)
 
     plot_tsne(aa, (labels_names, super_class_labels_names), seed=4, perplexity=30, alpha=0.3)
-    plot_tsne(aa, labels_names, seed=4, perplexity=30, alpha=0.3)
-    plot_tsne(aa, super_class_labels_names, seed=4, perplexity=30, alpha=0.3)
+    #plot_tsne(aa, labels_names, seed=4, perplexity=30, alpha=0.3)
+    #plot_tsne(aa, super_class_labels_names, seed=4, perplexity=30, alpha=0.3)
     pass
