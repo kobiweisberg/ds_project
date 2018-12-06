@@ -265,10 +265,6 @@ def main(params):
             if (len(j) > MIN_LENGTH):
                 new_indxs.append(i)  # list of the encoded docs without the doc id
     raw_labels = dataset.target
-    labels = []
-    #encoded_docs_cleaned = []
-    for i in range(len(new_indxs)):  # take only the labels for the docs we are going to use
-        labels.append(dataset.target[new_indxs[i]])
     only_encoded_docs = [ed[1] for ed in encoded_docs if ed[0] in new_indxs]
 
     if params['df']:
@@ -285,7 +281,10 @@ def main(params):
                 new_new_indxs.append(i)
         new_indxs = new_new_indxs
         only_encoded_docs = [ed[1] for ed in encoded_docs if ed[0] in new_indxs]
-
+    labels = []
+    # encoded_docs_cleaned = []
+    for i in range(len(new_indxs)):  # take only the labels for the docs we are going to use
+        labels.append(dataset.target[new_indxs[i]])
     encoded_docs = [(idx,ed) for ed,idx in zip(only_encoded_docs,new_indxs)]
 
     #only_encoded_docs = []
