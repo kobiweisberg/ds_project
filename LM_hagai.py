@@ -9,7 +9,7 @@ import torch.onnx
 
 #import data
 import LM_model as model
-from LSTM0.dataloader import *
+from dataloader import *
 
 parser = argparse.ArgumentParser(description='PyTorch Wikitext-2 RNN/LSTM Language Model')
 parser.add_argument('--data', type=str, default='./LSTM0/files/',
