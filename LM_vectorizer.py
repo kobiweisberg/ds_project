@@ -31,6 +31,7 @@ def batchify(corpus, bsz,device):
     return c
 
 def get_docs_repr(model,data):
+    print('extract docs representation from model')
     docs_representation = []
     with torch.no_grad():
         for i,doc in enumerate(data):
