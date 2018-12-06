@@ -14,7 +14,7 @@ import cluster as clst
 import analyze as anlz
 import warnings
 import argparse
-
+from LM_vectorizer import plot_tsne
 import torch
 from torch.autograd import Variable
 
@@ -42,6 +42,8 @@ parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
+parser.add_argument('--dellink', action='store_true',
+                    help='delete old linkage table')
 args = parser.parse_args()
 
 torch.manual_seed(args.seed)
@@ -96,20 +98,6 @@ for vect, k in itertools.product([vect_tfidf, vect_w2v],all_k):
         Params(vect, clust_kneams, aff_cosine, link_ward, min_df, max_df, k, num_of_documents),
     ]
     '''
-files = os.listdir(os.path.curdir)
-for file in files:
-    if file.startswith('linkage_table'):
-        warnings.warn('warning: csv file already exists')
-        print('delete %s?' % file)
-        ans = input().lower()
-        print(ans)
-        if(ans == 'y'):
-            os.remove(file)
-            print('%s deleted!' % file)
-
-
-#params
-
 
 
 
@@ -148,6 +136,8 @@ for idx,param in enumerate(prarameters):
             #Word2Vec
             emails_representation = vr.BOW_w2v(emails)
         #anlz.tsne_plot(emails_representation, labels, args.seed)
+        labels_names = [corpus.target_names[x] for x in corpus.labels]
+        plot_tsne(emails_representation, labels_names, seed=4, perplexity=30, alpha=0.3)
         print('clustering...')
         ##clustering
         if(param.clustering == clust_kneams):
