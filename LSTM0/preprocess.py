@@ -271,20 +271,19 @@ def main(params):
     only_encoded_docs = [ed[1] for ed in encoded_docs if ed[0] in new_indxs]
 
     if params['df']:
+        new_new_indxs = []
         only_from_pp = []
         pp_docs = [' '.join([decoder[w] for w in doc]) for doc in only_encoded_docs]
         cv = txt.CountVectorizer(min_df=params['min_df'], max_df=params['max_df'])  # , analyzer=my_analyzer)
         cv.fit(pp_docs)
         analyzer = cv.build_analyzer()
-        for d in pp_docs:
-            try:
-                d_df = ' '.join([word for word in analyzer(d) if word not in cv.stop_words_])
+        for i,d in zip(new_indxs,pp_docs):
+            d_df = ' '.join([word for word in analyzer(d) if word not in cv.stop_words_])
+            if len(d_df.split()) > MIN_NON_ENK_WORDS:
                 only_from_pp.append([encoder[x] for x in d_df.split()])
-            except IndexError:
-                print(d)
-                pass
-        assert len(only_encoded_docs) == len(only_from_pp)
-        only_encoded_docs = only_from_pp
+                new_new_indxs.append(i)
+        new_indxs = new_new_indxs
+        only_encoded_docs = [ed[1] for ed in encoded_docs if ed[0] in new_indxs]
 
     encoded_docs = [(idx,ed) for ed,idx in zip(only_encoded_docs,new_indxs)]
 
