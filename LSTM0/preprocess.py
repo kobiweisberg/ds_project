@@ -209,7 +209,8 @@ def get_windows(doc, hws=5):
 #################################################################
 def main(params):
     if params['df']:
-        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'df_files'))
+        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     'df_files_max_df_{}_min_df_{}'.format(params['max_df'],params['min_df'])))
     else:
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'files'))
     #sys.path.append('..')
@@ -344,6 +345,10 @@ def main(params):
 
 
     # save data
+    try:
+        os.makedirs(sys.path[-1])
+    except OSError:
+        pass
     os.chdir(sys.path[-1])
     json.dump(decoder, open(params['output_vocab'], 'w'))
     json.dump(encoder, open(params['encoder'], 'w'))
