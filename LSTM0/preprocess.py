@@ -11,6 +11,7 @@ import pickle
 import argparse
 import json
 import re
+from sklearn.feature_extraction import text as txt
 
 def preprocess(docs, nlp, min_length, min_counts, max_counts,number_of_common_to_ignore):
     """Tokenize, clean, and encode documents.
@@ -207,7 +208,11 @@ def get_windows(doc, hws=5):
 
 #################################################################
 def main(params):
-    sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'files'))
+    if params['df']:
+        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                                     'df_files_max_df_{}_min_df_{}'.format(params['max_df'],params['min_df'])))
+    else:
+        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),'files'))
     #sys.path.append('..')
     #sys.path.append('/home/lab/vgilad/PycharmProjects/lda2vec/lda2vec-pytorch')
     #from utils import preprocess, get_windows
@@ -260,11 +265,26 @@ def main(params):
             if (len(j) > MIN_LENGTH):
                 new_indxs.append(i)  # list of the encoded docs without the doc id
     raw_labels = dataset.target
+    only_encoded_docs = [ed[1] for ed in encoded_docs if ed[0] in new_indxs]
+
+    if params['df']:
+        new_new_indxs = []
+        only_from_pp = []
+        pp_docs = [' '.join([decoder[w] for w in doc]) for doc in only_encoded_docs]
+        cv = txt.CountVectorizer(min_df=params['min_df'], max_df=params['max_df'])  # , analyzer=my_analyzer)
+        cv.fit(pp_docs)
+        analyzer = cv.build_analyzer()
+        for i,d in zip(new_indxs,pp_docs):
+            d_df = ' '.join([word for word in analyzer(d) if word not in cv.stop_words_])
+            if len(d_df.split()) > MIN_NON_ENK_WORDS:
+                only_from_pp.append([encoder[x] for x in d_df.split()])
+                new_new_indxs.append(i)
+        new_indxs = new_new_indxs
+        only_encoded_docs = [ed[1] for ed in encoded_docs if ed[0] in new_indxs]
     labels = []
-    #encoded_docs_cleaned = []
+    # encoded_docs_cleaned = []
     for i in range(len(new_indxs)):  # take only the labels for the docs we are going to use
         labels.append(dataset.target[new_indxs[i]])
-    only_encoded_docs = [ed[1] for ed in encoded_docs if ed[0] in new_indxs]
     encoded_docs = [(idx,ed) for ed,idx in zip(only_encoded_docs,new_indxs)]
 
     #only_encoded_docs = []
@@ -324,6 +344,10 @@ def main(params):
 
 
     # save data
+    try:
+        os.makedirs(sys.path[-1])
+    except OSError:
+        pass
     os.chdir(sys.path[-1])
     json.dump(decoder, open(params['output_vocab'], 'w'))
     json.dump(encoder, open(params['encoder'], 'w'))
@@ -359,6 +383,10 @@ if __name__ == "__main__":
   parser.add_argument('--output_doc_decoder', default='doc_decoder.json', help='output json file')
   parser.add_argument('--encoder', default='encoder.json', help='encoder json file')
   parser.add_argument('-l-','--lemma',help='use lemmas instead of words',action='store_true')
+  parser.add_argument('--df',help='remove word > max_df or < min_df',action='store_true')
+  parser.add_argument('--min_df', help='min_df', type=float, default=1e-4)
+  parser.add_argument('--max_df', help='max_df', type=float, default=0.05)
+
 
   args = parser.parse_args()
   params = vars(args)  # convert to ordinary dict

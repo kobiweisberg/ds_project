@@ -8,7 +8,7 @@ import seaborn as sns
 import matplotlib.pyplot as plt
 
 #import data
-from LSTM0.dataloader import *
+from dataloader import *
 #from LM_hagai import repackage_hidden
 
 def repackage_hidden(h):
@@ -18,7 +18,7 @@ def repackage_hidden(h):
     else:
         return tuple(repackage_hidden(v) for v in h)
 
-def batchify(corpus, bsz):
+def batchify(corpus, bsz,device):
     c = []
     for data in corpus:
         data = torch.LongTensor(data)
@@ -31,6 +31,7 @@ def batchify(corpus, bsz):
     return c
 
 def get_docs_repr(model,data):
+    print('extract docs representation from model')
     docs_representation = []
     with torch.no_grad():
         for i,doc in enumerate(data):
@@ -44,15 +45,32 @@ def get_docs_repr(model,data):
     return np.stack(docs_representation)
 
 def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=0.3):
-    df = pd.DataFrame({'label':labels})
-    print('compute tsne with perplexity {} and seed {}'.format(perplexity,seed))
-    tsne_components = tsne(n_components=2,perplexity=perplexity,random_state=seed)
+    if not(isinstance(labels,list) or isinstance(labels,tuple)):
+        raise ValueError('labels can be only list of lables or tuple of lists, got {}'.format(type(labels)))
+    print('compute tsne with perplexity {} and seed {}'.format(perplexity, seed))
+    tsne_components = tsne(n_components=2, perplexity=perplexity, random_state=seed)
     transformed = tsne_components.fit_transform(high_dim_repr)
+    df = pd.DataFrame()
     df['c1'] = transformed[:, 0]
     df['c2'] = transformed[:, 1]
-    sns.scatterplot(data=df,x='c1',y='c2',hue='label',alpha=alpha)
-    plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.show()
+    if isinstance(labels,tuple):
+        print('tsne by several sets of labels')
+        for i,lst in enumerate(labels):
+            print('label set #{}'.format(i))
+            df['label_{}'.format(i)] = lst
+            plt.figure(i+1000)
+            sns.scatterplot(data=df, x='c1', y='c2', hue='label_{}'.format(i), alpha=alpha)
+            plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.show()
+    #df = pd.DataFrame({'label':labels})
+    elif isinstance(labels,list):
+        print('tsne by one set of labels')
+        df['label']= labels
+        sns.scatterplot(data=df,x='c1',y='c2',hue='label',alpha=alpha)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.show(block=False)
+    else:
+        raise ValueError('labels can be only list of lables or tuple of lists, got {}'.format(type(labels)))
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Language Model')
@@ -84,8 +102,11 @@ if __name__=='__main__':
     corpus = Dataloader(args)
     ntokens = len(corpus.decoder)
     labels_names = [corpus.target_names[x] for x in corpus.labels]
-    data = batchify(corpus.only_encoded_docs, 1)
+    super_class_labels_names = corpus.super_class_labels_by_name
+    data = batchify(corpus.only_encoded_docs, 1,device)
     aa = get_docs_repr(model,data)
 
-    plot_tsne(aa, labels_names, seed=4, perplexity=30, alpha=0.3)
+    plot_tsne(aa, (labels_names, super_class_labels_names), seed=4, perplexity=30, alpha=0.3)
+    #plot_tsne(aa, labels_names, seed=4, perplexity=30, alpha=0.3)
+    #plot_tsne(aa, super_class_labels_names, seed=4, perplexity=30, alpha=0.3)
     pass
