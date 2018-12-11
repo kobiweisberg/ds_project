@@ -24,6 +24,7 @@ from torch.autograd import Variable
 import torch.optim as optim
 import math
 from copy import deepcopy
+from utils import *
 
 class Dataloader(data.Dataset):
 
@@ -69,18 +70,11 @@ class Dataloader(data.Dataset):
         with open('doc_decoder.json', 'rb') as f:
             self.doc_decoder = json.load(f)
 
-        self.super_class_target_names = ['comp','rec','sci','misc','politics','religion']
-        self.super_class2_ix = {k:v for v,k in enumerate(self.super_class_target_names)}
-        self.super_class_dict = {'comp.graphics':'comp','comp.os.ms-windows.misc':'comp','comp.sys.ibm.pc.hardware':'comp',
-                            'comp.sys.mac.hardware':'comp','comp.windows.x':'comp',
-                            'rec.autos':'rec','rec.motorcycles':'rec','rec.sport.baseball':'rec','rec.sport.hockey':'rec',
-                            'sci.crypt':'sci','sci.electronics':'sci','sci.med':'sci','sci.space':'sci',
-                            'misc.forsale':'misc',
-                            'talk.politics.misc':'politics','talk.politics.guns':'politics','talk.politics.mideast':'politics',
-                            'talk.religion.misc':'religion','alt.atheism':'religion','soc.religion.christian':'religion'
-                            }
-        self.super_class_labels_by_name = [self.super_class_dict[self.target_names[l]] for l in self.labels]
-        self.super_class_labels = [self.super_class2_ix[name] for name in self.super_class_labels_by_name]
+        self.super_class_target_names = SUPER_CLASS_LIST
+        self.super_class2_ix = SUPER_CLASS2IX
+        self.super_class_dict = SUPER_CLASS_DICT
+        self.super_class_labels_by_name = [SUPER_CLASS_DICT[self.target_names[l]] for l in self.labels]
+        self.super_class_labels = [SUPER_CLASS2IX[name] for name in self.super_class_labels_by_name]
 
 
         """used_docs = []
