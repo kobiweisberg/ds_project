@@ -151,6 +151,22 @@ for idx,param in enumerate(prarameters):
         elif param.vectorizing == vect_LM:
             data = batchify(corpus.only_encoded_docs, 1, device)
             emails_representation = get_docs_repr(model, data)
+        elif param.vectorizing == vect_gilad:
+            #data = batchify(corpus.only_encoded_docs, 1, device)
+            import opts
+            # take only test documents (fist 1000 are val last 2000 are train)
+            ntokens = len(corpus.decoder)
+            num_of_documents = len(corpus.only_encoded_docs[1000:-2000])
+            labels = corpus.labels[1000:-2000]
+            pp_docs = [' '.join([corpus.decoder[str(w)] for w in doc]) for doc in
+                       corpus.only_encoded_docs]
+            emails = pp_docs[1000:-2000]
+            super_class_labels = corpus.super_class_labels[1000:-2000]
+
+            opt = opts.parse_opt()
+            emails_representation, labels_not_used = create_vec(opt)  # get numpy matrix
+
+            #emails_representation = emails_representation[1000:-2000]
         #anlz.tsne_plot(emails_representation, labels, args.seed)
         print('clustering...')
         ##clustering
