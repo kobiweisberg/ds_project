@@ -46,20 +46,49 @@ def get_docs_repr(model,data):
 
 def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=1):
     import color_constants
-    df = pd.DataFrame({'label':labels})
+    if not (isinstance(labels, list) or isinstance(labels, tuple)):
+        raise ValueError(
+            'labels can be only list of lables or tuple of lists, got {}'.format(type(labels)))
+
     print('compute tsne with perplexity {} and seed {}'.format(perplexity,seed))
     tsne_components = tsne(n_components=2,perplexity=perplexity,random_state=seed)
     transformed = tsne_components.fit_transform(high_dim_repr)
+    df = pd.DataFrame()
     df['c1'] = transformed[:, 0]
     df['c2'] = transformed[:, 1]
-    colormap = cm.viridis
+    if isinstance(labels, tuple):
+        print('tsne by several sets of labels')
+        for i, lst in enumerate(labels):
+            print('label set #{}'.format(i))
+            df['label_{}'.format(i)] = lst
+            plt.figure(i + 1000)
+
+            current_palette = sns.color_palette(color_constants.colors(n=20))
+            if i == 0: # 20 classes
+                sns.scatterplot(data=df, x='c1', y='c2', hue='label_{}'.format(i), alpha=alpha, palette=current_palette)
+            else:  # 6 super classes
+                sns.scatterplot(data=df, x='c1', y='c2', hue='label_{}'.format(i), alpha=alpha)
+            plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.show(block=False)
+        # df = pd.DataFrame({'label':labels})
+    elif isinstance(labels, list):
+        print('tsne by one set of labels')
+        df['label'] = labels
+        sns.scatterplot(data=df, x='c1', y='c2', hue='label', alpha=alpha)
+        plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        plt.show(block=False)
+    else:
+        raise ValueError(
+            'labels can be only list of lables or tuple of lists, got {}'.format(type(labels)))
+    """colormap = cm.viridis
     #colorlist = [colors.rgb2hex(colormap(i)) for i in np.linspace(0, 0.9, len(set(y)) + 1)]
     a = color_constants.colors(n=20)
     current_palette = sns.color_palette(a)
     #sns.palplot(current_palette)
-    sns.scatterplot(data=df,x='c1',y='c2',hue='label',alpha=alpha, palette=current_palette)
+    #sns.scatterplot(data=df,x='c1',y='c2',hue='label',alpha=alpha, palette=current_palette)  # my original
+    sns.scatterplot(data=df, x='c1', y='c2', hue='label', alpha=0.3)  # Hagai
     plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-    plt.show()
+    plt.show()"""
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Language Model')
