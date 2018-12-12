@@ -14,11 +14,11 @@ import cluster as clst
 import analyze as anlz
 import warnings
 import argparse
-<<<<<<< HEAD
+
 from LM_vectorizer import batchify,plot_tsne,get_docs_repr
-=======
+
 from LM_vectorizer import batchify, plot_tsne, get_docs_repr
->>>>>>> 6247dd986deef2cd291ab0c5ee43277a2cc2181c
+
 
 import torch
 from torch.autograd import Variable
@@ -71,26 +71,26 @@ num_of_documents = len(corpus.only_encoded_docs)
 labels = corpus.labels
 pp_docs = [' '.join([corpus.decoder[str(w)] for w in doc]) for doc in corpus.only_encoded_docs]
 emails = pp_docs
-<<<<<<< HEAD
+
 #emails = corpus.raw_data
 #labels = corpus.raw_labels
 
 for example_idx in range(20):
     with open('/home/lab/taitelh/PycharmProjects/ds_project/results_hagai/examples/' + str(example_idx) + '.txt','w') as wf:
-=======
+
 # emails = corpus.raw_data
 # labels = corpus.raw_labels
 
 for example_idx in range(20):
     with open('../../examples/' + str(example_idx) + '.txt', 'w') as wf:
->>>>>>> 6247dd986deef2cd291ab0c5ee43277a2cc2181c
+
         wf.write('Label (pp): %s\n' % corpus.target_names[corpus.labels[example_idx]])
         wf.write('Label (raw): %s\n' % corpus.target_names[corpus.raw_labels[corpus.encoded_docs[example_idx][0]]])
         wf.write('\n------------------------------\n')
         wf.write(pp_docs[example_idx])
         wf.write('\n------------------------------\n')
         wf.write(corpus.raw_data[corpus.encoded_docs[example_idx][0]])
-<<<<<<< HEAD
+
 number_of_labels = 20 #TODO magic number
 max_df = 0.05
 min_df = 1e-4
@@ -99,7 +99,7 @@ all_vect = [vect_tfidf, vect_w2v, vect_bow]
 assert (len(emails) == len(labels))
 print(len(emails))
 prarameters = [Params(vect_LM, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents)]
-=======
+
 number_of_labels = 20  # TODO magic number
 max_df = 1.  # 0.05
 min_df = 0.  # 1e-4
@@ -108,7 +108,7 @@ all_vect = [vect_tfidf, vect_w2v, vect_bow]
 assert (len(emails) == len(labels))
 print(len(emails))
 prarameters = [Params(vect_w2v, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents)]
->>>>>>> 6247dd986deef2cd291ab0c5ee43277a2cc2181c
+
 '''for vect, k in itertools.product(all_vect,all_k):
     prarameters = prarameters + \
     [
@@ -129,7 +129,7 @@ files = os.listdir(os.path.curdir)
 for file in files:
     if file.startswith('linkage_table'):
         warnings.warn('warning: csv file already exists')
-<<<<<<< HEAD
+
         print('delete %s?' % file)
         ans = input().lower()
         print(ans)
@@ -141,14 +141,14 @@ for file in files:
 #params
 
 
-=======
+
         ans = args.dellink
         if (ans):
             os.remove(file)
             print('%s deleted!' % file)
 
 # params
->>>>>>> 6247dd986deef2cd291ab0c5ee43277a2cc2181c
+
 
 
 for idx, param in enumerate(prarameters):
@@ -188,7 +188,7 @@ for idx, param in enumerate(prarameters):
         elif param.vectorizing == vect_LM:
             data = batchify(corpus.only_encoded_docs, 1, device)
             emails_representation = get_docs_repr(model, data)
-<<<<<<< HEAD
+
         elif param.vectorizing == vect_gilad:
             #data = batchify(corpus.only_encoded_docs, 1, device)
             import opts
@@ -206,9 +206,9 @@ for idx, param in enumerate(prarameters):
 
             #emails_representation = emails_representation[1000:-2000]
         #anlz.tsne_plot(emails_representation, labels, args.seed)
-=======
+
         # anlz.tsne_plot(emails_representation, labels, args.seed)
->>>>>>> 6247dd986deef2cd291ab0c5ee43277a2cc2181c
+
         print('clustering...')
         ##clustering
         if (param.clustering == clust_kneams):
