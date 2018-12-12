@@ -11,7 +11,7 @@ import torch
 from torch.autograd import Variable
 
 #import data
-from LSTM0.dataloader import *
+from dataloader import *
 
 parser = argparse.ArgumentParser(description='Language Model')
 

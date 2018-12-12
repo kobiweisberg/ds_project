@@ -11,7 +11,8 @@ pickle_path = 'results.pkl'
 vect_bow = 'bow'
 vect_tfidf = 'tfidf'
 vect_w2v = 'w2v'
-vectorizing_options = [vect_bow,vect_tfidf,vect_w2v]
+vect_LM = 'lm'
+vectorizing_options = [vect_bow,vect_tfidf,vect_w2v,vect_LM]
 clust_kneams = 'kmeans'
 clust_hirarchical = 'hirarchical'
 clustering_options = [clust_kneams,clust_hirarchical]
@@ -22,6 +23,17 @@ link_ward = 'ward'
 link_complete = 'complete'
 link_avarage = 'average'
 linkage_options = [link_ward, link_complete, link_avarage]
+
+SUPER_CLASS_LIST = ['comp','rec','sci','misc','politics','religion']
+SUPER_CLASS2IX = {k:v for v,k in enumerate(SUPER_CLASS_LIST)}
+SUPER_CLASS_DICT = {'comp.graphics':'comp','comp.os.ms-windows.misc':'comp','comp.sys.ibm.pc.hardware':'comp',
+                            'comp.sys.mac.hardware':'comp','comp.windows.x':'comp',
+                            'rec.autos':'rec','rec.motorcycles':'rec','rec.sport.baseball':'rec','rec.sport.hockey':'rec',
+                            'sci.crypt':'sci','sci.electronics':'sci','sci.med':'sci','sci.space':'sci',
+                            'misc.forsale':'misc',
+                            'talk.politics.misc':'politics','talk.politics.guns':'politics','talk.politics.mideast':'politics',
+                            'talk.religion.misc':'religion','alt.atheism':'religion','soc.religion.christian':'religion'
+                            }
 
 def check_in_options(option,options_list):
     if (not option in options_list):

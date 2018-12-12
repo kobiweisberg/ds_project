@@ -24,18 +24,25 @@ from torch.autograd import Variable
 import torch.optim as optim
 import math
 from copy import deepcopy
+from utils import *
 
 class Dataloader(data.Dataset):
 
     def  __init__(self, opt):
         self.opt = opt
         # load data
+<<<<<<< HEAD
         """cd = os.path.join(os.path.dirname(os.path.abspath(__file__)))  # original load of pp files
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files'))  # original load of pp files
         os.chdir(sys.path[-1])"""  # original load of pp files
         #os.chdir('/cortex/users/gilad/backup_lstm_ds_project/files')  # old pp
         #os.chdir('/cortex/users/taitelh/ds_project/data/df_files_max_df_0.05_min_df_0.0001')  # hagai pp1
         os.chdir('/cortex/users/taitelh/ds_project/data/df_files_max_df_0.5_min_df_0.0001')  # hagai pp2
+=======
+        cd = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files'))
+        os.chdir(opt.data)
+>>>>>>> 6247dd986deef2cd291ab0c5ee43277a2cc2181c
 
         #self.decoder = np.load('decoder.npy')  # ix2word
         #self.doc_decoder = np.load('doc_decoder.npy')  # doc counter to word index
@@ -63,7 +70,10 @@ class Dataloader(data.Dataset):
         with open('raw_labels', 'rb') as fp:
             self.raw_labels = pickle.load(fp)
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> 6247dd986deef2cd291ab0c5ee43277a2cc2181c
         with open('vocab.json', 'rb') as f:
             self.decoder = json.load(f)
 
@@ -73,6 +83,7 @@ class Dataloader(data.Dataset):
         with open('doc_decoder.json', 'rb') as f:
             self.doc_decoder = json.load(f)
 
+<<<<<<< HEAD
         self.super_class_target_names = ['comp', 'rec', 'sci', 'misc', 'politics', 'religion']
         self.super_class2_ix = {k: v for v, k in enumerate(self.super_class_target_names)}
         self.super_class_dict = {'comp.graphics': 'comp', 'comp.os.ms-windows.misc': 'comp',
@@ -92,6 +103,15 @@ class Dataloader(data.Dataset):
                                            self.labels]
         self.super_class_labels = [self.super_class2_ix[name] for name in
                                    self.super_class_labels_by_name]
+=======
+        self.super_class_target_names = SUPER_CLASS_LIST
+        self.super_class2_ix = SUPER_CLASS2IX
+        self.super_class_dict = SUPER_CLASS_DICT
+        self.super_class_labels_by_name = [SUPER_CLASS_DICT[self.target_names[l]] for l in self.labels]
+        self.super_class_labels = [SUPER_CLASS2IX[name] for name in self.super_class_labels_by_name]
+
+
+>>>>>>> 6247dd986deef2cd291ab0c5ee43277a2cc2181c
         """used_docs = []
         for val in self.doc_decoder.values():  # get all the documents int use
             used_docs.append(val)

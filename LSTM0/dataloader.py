@@ -53,6 +53,12 @@ class Dataloader(data.Dataset):
         with open('only_encoded_docs', 'rb') as fp:
             self.only_encoded_docs = pickle.load(fp)
 
+        with open('raw_data', 'rb') as fp:
+            self.raw_data = pickle.load(fp)
+
+        with open('raw_labels', 'rb') as fp:
+            self.raw_labels = pickle.load(fp)
+
         with open('vocab.json', 'rb') as f:
             self.decoder = json.load(f)
 
@@ -62,7 +68,7 @@ class Dataloader(data.Dataset):
         with open('doc_decoder.json', 'rb') as f:
             self.doc_decoder = json.load(f)
 
-        """used_docs = []
+            """used_docs = []
         for val in self.doc_decoder.values():  # get all the documents int use
             used_docs.append(val)
 
