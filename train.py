@@ -19,16 +19,17 @@ from six.moves import cPickle
 #import collections
 #import matplotlib.pyplot as plt
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '3'
+os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 
 def train(opt):
 
     # load data
     val_accuracy_best = 0 # compare the best val to decide if to save new model
+    val_loss_best = 10
     val_bch_sz = 1  # validation batch size - 1 for conv model 30 for regular model
-    n_val = 2000  # determine train\val set sizes
-    histories_name = 'histories_conv_model' + opt.model_name # histories_conv_model or hostories
-    model_name = 'model_conv_' + opt.model_name  # model_conv or model
+    n_val = 2000#8500  # determine train\val set sizes
+    histories_name = opt.model_name # histories_conv_model or hostories
+    model_name = opt.model_name  # model_conv or model
     print('model name is {} \nwight decay is {}' .format(model_name, opt.weight_decay))
     loader = Dataloader(opt)
     opt.vocab_size = len(loader.decoder)  # get vocab size
@@ -62,15 +63,20 @@ def train(opt):
     train_loss_list = DocEncoder.MaxSizeList(train_list_size)  # limited list length, for averaging of the train loss (as batch size is 1)
     train_accuracy_list = DocEncoder.MaxSizeList(train_list_size)
     while True:
+
         start = time.time()
         # Load data from train split (0)
         batch_docs, batch_masks, batch_labels, finished = get_batch(encoded_docs, docs_length, labels, opt, iteration)
+        if batch_docs.shape[1] < 5:
+            iteration+=1
+            continue
 
         #print('Read data:', time.time() - start)
 
         torch.cuda.synchronize()
         start = time.time()
         optimizer.zero_grad()
+
         loss, accuracy = model(batch_docs, batch_masks, batch_labels, iteration)
         loss.backward()
         DocEncoder.clip_gradient(optimizer, opt.grad_clip)
@@ -83,7 +89,7 @@ def train(opt):
         if iteration%100==0:  # print every 100 iterations
             print("iter {} (epoch {}), time/batch = {:.3f}, train_loss = {:.3f}, accuracy = {:.3f}" .format(iteration, epoch, end - start, train_loss, accuracy))
 
-        if (iteration % opt.save_checkpoint_every == 0):
+        if (iteration % opt.save_checkpoint_every == 0) and iteration != 0:
     	    # evaluation
             # initialiazition #
             print('starting evaluation on validation set')
@@ -92,13 +98,15 @@ def train(opt):
             val_accuracy_sum = 0
             val_loss = 0
             val_accuracy = 0
-
-            val_iters = math.ceil(n_val / (val_bch_sz*10))  # number of val iterations (n_val is just part of the validation set)
+            # original
+            #val_iters = math.ceil(n_val / (val_bch_sz*10))  # number of val iterations (n_val is just part of the validation set)
+            val_iters=1000
             for val_iter in range(val_iters):
                 batch_docs, batch_masks, batch_labels = get_batch(val_encoded_docs[val_iter*val_bch_sz:(val_iter+1)*val_bch_sz],\
                                                                   val_docs_length[val_iter*val_bch_sz:(val_iter+1)*val_bch_sz],\
                                                                   val_labels[val_iter*val_bch_sz:(val_iter+1)*val_bch_sz], opt,\
                                                                   iteration, train_flag=False)
+                if batch_docs.shape[1]<5: continue
 
             #batch_docs, batch_masks, batch_labels = get_batch(val_encoded_docs, val_docs_length, val_labels, opt, iteration, train_flag=False)
                 model.eval()
@@ -106,7 +114,7 @@ def train(opt):
                 loss, val_accuracy = model(batch_docs, batch_masks, batch_labels, iteration, train_flag=False)
                 val_loss_sum += len(batch_labels)*loss.data  # sum of val loss of specific batch and sum it over all val set
                 val_accuracy_sum += len(batch_labels)*val_accuracy.data # same as above for accuracy
-                if val_iter % 20 == 0:
+                if val_iter % 100 == 0:
                     print('validation - iteration {} from {}'  .format(val_iter, val_iters))
 
                 #val_loss = loss.data[0]
@@ -121,11 +129,12 @@ def train(opt):
             train_loss_history[iteration] = {'train_loss': train_loss, 'train_accuracy': accuracy, 'val_loss':val_loss, 'val_accuracy':val_accuracy, 'epoch': epoch}
             print("iter {} (epoch {}), train_loss = {:.3f}, train_accuracy = {:.3f}".format(iteration, epoch, train_loss, accuracy))
 
-            with open(os.path.join(opt.checkpoint_path, histories_name + '.pkl'), 'wb') as f:
+            with open(os.path.join(opt.checkpoint_path, 'histories' + histories_name + '.pkl'), 'wb') as f:
                 cPickle.dump(train_loss_history, f)
 
             # check if the model is the best one
-            if val_accuracy > val_accuracy_best:
+            #if val_accuracy > val_accuracy_best:
+            if val_loss < val_loss_best:
                 # save model
                 checkpoint_path = os.path.join(opt.checkpoint_path, model_name + '.pth')
                 torch.save(model.state_dict(), checkpoint_path)
