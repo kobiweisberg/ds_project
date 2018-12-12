@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 import matplotlib.colors as colors
 import matplotlib.cm as cm
 from sklearn import manifold
-import dataframe as df
+#import dataframe as df
 def plot_embedding(X,y, title=None):
     x_min, x_max = np.min(X, 0), np.max(X, 0)
     X = (X - x_min) / (x_max - x_min)
