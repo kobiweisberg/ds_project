@@ -209,6 +209,7 @@ def get_windows(doc, hws=5):
 #################################################################
 def main(params):
     if params['df']:
+        print('df is ON')
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)),
                                      'df_files_max_df_{}_min_df_{}'.format(params['max_df'],params['min_df'])))
     else:
@@ -280,12 +281,14 @@ def main(params):
                 only_from_pp.append([encoder[x] for x in d_df.split()])
                 new_new_indxs.append(i)
         new_indxs = new_new_indxs
+        #only_encoded_docs = [ed[1] for ed in encoded_docs if ed[0] in new_indxs]
+        encoded_docs = [(idx, ed) for ed, idx in zip(only_from_pp, new_indxs)]
         only_encoded_docs = [ed[1] for ed in encoded_docs if ed[0] in new_indxs]
     labels = []
     # encoded_docs_cleaned = []
     for i in range(len(new_indxs)):  # take only the labels for the docs we are going to use
         labels.append(dataset.target[new_indxs[i]])
-    encoded_docs = [(idx,ed) for ed,idx in zip(only_encoded_docs,new_indxs)]
+    #encoded_docs = [(idx,ed) for ed,idx in zip(only_encoded_docs,new_indxs)]
 
     #only_encoded_docs = []
     #for i, j in encoded_docs_cleaned:

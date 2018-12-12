@@ -44,33 +44,7 @@ def get_docs_repr(model,data):
 
     return np.stack(docs_representation)
 
-def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=0.3):
-    if not(isinstance(labels,list) or isinstance(labels,tuple)):
-        raise ValueError('labels can be only list of lables or tuple of lists, got {}'.format(type(labels)))
-    print('compute tsne with perplexity {} and seed {}'.format(perplexity, seed))
-    tsne_components = tsne(n_components=2, perplexity=perplexity, random_state=seed)
-    transformed = tsne_components.fit_transform(high_dim_repr)
-    df = pd.DataFrame()
-    df['c1'] = transformed[:, 0]
-    df['c2'] = transformed[:, 1]
-    if isinstance(labels,tuple):
-        print('tsne by several sets of labels')
-        for i,lst in enumerate(labels):
-            print('label set #{}'.format(i))
-            df['label_{}'.format(i)] = lst
-            plt.figure(i+1000)
-            sns.scatterplot(data=df, x='c1', y='c2', hue='label_{}'.format(i), alpha=alpha)
-            plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        plt.show()
-    #df = pd.DataFrame({'label':labels})
-    elif isinstance(labels,list):
-        print('tsne by one set of labels')
-        df['label']= labels
-        sns.scatterplot(data=df,x='c1',y='c2',hue='label',alpha=alpha)
-        plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
-        plt.show(block=False)
-    else:
-        raise ValueError('labels can be only list of lables or tuple of lists, got {}'.format(type(labels)))
+
 
 if __name__=='__main__':
     parser = argparse.ArgumentParser(description='Language Model')

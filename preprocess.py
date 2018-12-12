@@ -225,8 +225,8 @@ def main(params):
 
     # Load dataset
 
-    #dataset = fetch_20newsgroups(subset='all', remove=('headers', 'footers', 'quotes'))
-    dataset = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
+    dataset = fetch_20newsgroups(subset='all', remove=('headers', 'footers', 'quotes'))
+    #dataset = fetch_20newsgroups(subset='train', remove=('headers', 'footers', 'quotes'))
     docs = dataset['data']
 
     # number of documents

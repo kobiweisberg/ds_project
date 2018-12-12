@@ -30,10 +30,11 @@ class Dataloader(data.Dataset):
     def  __init__(self, opt):
         self.opt = opt
         # load data
+        cur_dir = os.path.abspath(os.curdir)
         cd = os.path.join(os.path.dirname(os.path.abspath(__file__)))
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files'))
         os.chdir(opt.data)
-
+        print(opt.data)
         #self.decoder = np.load('decoder.npy')  # ix2word
         #self.doc_decoder = np.load('doc_decoder.npy')  # doc counter to word index
         self.target_names = np.load('dataset.target_names.npy')  # topics names
@@ -82,6 +83,7 @@ class Dataloader(data.Dataset):
         self.super_class_labels_by_name = [self.super_class_dict[self.target_names[l]] for l in self.labels]
         self.super_class_labels = [self.super_class2_ix[name] for name in self.super_class_labels_by_name]
 
+        os.chdir(cur_dir)
 
         """used_docs = []
         for val in self.doc_decoder.values():  # get all the documents int use
