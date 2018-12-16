@@ -60,10 +60,6 @@ if torch.cuda.is_available():
 
 device = torch.device("cuda" if args.cuda else "cpu")
 
-with open(args.checkpoint, 'rb') as f:
-    model = torch.load(f, map_location='cpu').to(device)
-model.eval()
-
 corpus = Dataloader(args)
 labels_names = [corpus.target_names[x] for x in corpus.labels]
 super_class_labels_names = corpus.super_class_labels_by_name
@@ -98,8 +94,8 @@ all_vect = [vect_tfidf, vect_w2v, vect_bow]
 assert (len(emails) == len(labels))
 num_of_documents = len(emails)
 
-#prarameters = [Params(vect_w2v, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents,True)]
-prarameters = generate_params(all_vect, min_df, max_df, all_k, num_of_documents,True)
+#prarameters = [Params(vect_tfidf, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents,True)]
+prarameters = generate_params([vect_LM], min_df, max_df, all_k, num_of_documents,True)
 
 for file in os.listdir(ncut_dir):
     if file.startswith('linkage_table'):
@@ -156,6 +152,12 @@ for idx, param in enumerate(prarameters):
             # Word2Vec
             emails_representation = vr.BOW_w2v(emails,"w2v.pickle")
         elif param.vectorizing == vect_LM:
+            with open(args.checkpoint, 'rb') as f:
+                if args.cuda:
+                    model = torch.load(f).to(device)
+                else:
+                    model = torch.load(f, map_location='cpu').to(device)
+            model.eval()
             data = batchify(corpus.only_encoded_docs, 1, device)
             emails_representation = get_docs_repr(model, data)
         elif param.vectorizing == vect_gilad:
@@ -255,8 +257,8 @@ for idx, param in enumerate(prarameters):
     except Exception as e:
         print('error: %s' % e)
 for k in [20]:
-    results_ncut = anlz.ncut_clustering(ncut_dir,k)
+    results_ncut = anlz.ncut_clustering(ncut_dir,k,labels)
     print('ncut accuracy (k=%d) = %f' % (k,results_ncut.get_list()[0]))
-    save_results(Params(ncut_stam, ncut_stam, ncut_stam, ncut_stam, min_df, max_df, k, max_num, True), results, results, results_dir)
+    save_results(Params(ncut_stam, ncut_stam, ncut_stam, ncut_stam, min_df, max_df, k, param.max_num, True), results, results, results_dir)
 
 # total_linkage_matrix = anlz.calc_total_linkage_matrix(num_of_documents)
