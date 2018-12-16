@@ -46,9 +46,8 @@ def tf_idf(files,min_df=0,max_df=np.inf):
     tf_idf_vecs = tfidf.transform(files)
     return tf_idf_vecs
 
-def BOW_w2v(files):
+def BOW_w2v(files,w2v_file):
     nltk.download('punkt')
-    w2v_file = "../../w2v.pickle"
     avg_w2v = AvgWordVectors()
     avg_w2v.fit(w2v_file)
     return np.array(avg_w2v.transform(files))
@@ -76,7 +75,8 @@ class AvgWordVectors:
                 ret.append(v/n)
             except:
                 print('ERROR in document #%d' % len(ret))
-                raise
+                ret.append(self.weights.get('the', 1.0)*self.wv['the'])
+                #raise
         return ret
 
 if __name__=='__main__':

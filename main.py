@@ -1,4 +1,4 @@
-from sklearn.datasets import fetch_20newsgroups
+
 '''from pprint import pprint
 import os
 import pickle
@@ -14,7 +14,7 @@ import cluster as clst
 import analyze as anlz
 import warnings
 import argparse
-from LM_vectorizer import batchify, plot_tsne, get_docs_repr
+from LM_vectorizer import batchify, get_docs_repr
 
 import torch
 from torch.autograd import Variable
@@ -22,7 +22,10 @@ from torch.autograd import Variable
 # import data
 from dataloader import *
 
-
+def create_dir(dir):
+    if not os.path.exists(dir):
+        os.makedirs(dir)
+    return os.path.abspath(dir)
 # from LM_hagai import repackage_hidden
 
 def repackage_hidden(h):
@@ -46,7 +49,7 @@ parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
-parser.add_argument('--dellink', action='store_true',
+parser.add_argument('--ncut_only', action='store_true',
                     help='delete old linkage table')
 args = parser.parse_args()
 
@@ -62,6 +65,9 @@ with open(args.checkpoint, 'rb') as f:
 model.eval()
 
 corpus = Dataloader(args)
+labels_names = [corpus.target_names[x] for x in corpus.labels]
+super_class_labels_names = corpus.super_class_labels_by_name
+
 ntokens = len(corpus.decoder)
 num_of_documents = len(corpus.only_encoded_docs)
 labels = corpus.labels
@@ -69,9 +75,13 @@ pp_docs = [' '.join([corpus.decoder[str(w)] for w in doc]) for doc in corpus.onl
 emails = pp_docs
 # emails = corpus.raw_data
 # labels = corpus.raw_labels
+examples_dir = create_dir('examples')
+tsne_dir = create_dir('tsne')
+ncut_dir = create_dir('ncut')
+results_dir = create_dir('results')
 
-for example_idx in range(20):
-    with open('../../examples/' + str(example_idx) + '.txt', 'w') as wf:
+for example_idx in range(200):
+    with open(os.path.join(examples_dir,str(example_idx) + '.txt'), 'w') as wf:
         wf.write('Label (pp): %s\n' % corpus.target_names[corpus.labels[example_idx]])
         wf.write('Label (raw): %s\n' % corpus.target_names[corpus.raw_labels[corpus.encoded_docs[example_idx][0]]])
         wf.write('\n------------------------------\n')
@@ -79,43 +89,40 @@ for example_idx in range(20):
         wf.write('\n------------------------------\n')
         wf.write(corpus.raw_data[corpus.encoded_docs[example_idx][0]])
 number_of_labels = 20  # TODO magic number
+number_of_labels_super = 6  # TODO magic number
+
 max_df = 1.  # 0.05
 min_df = 0.  # 1e-4
-all_k = [20, 50, 200]
+all_k = [20, 50] #, 200]
 all_vect = [vect_tfidf, vect_w2v, vect_bow]
 assert (len(emails) == len(labels))
-print(len(emails))
-prarameters = [Params(vect_w2v, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents)]
-'''for vect, k in itertools.product(all_vect,all_k):
-    prarameters = prarameters + \
-    [
-        Params(vect, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, k, num_of_documents),
-        Params(vect, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, k, num_of_documents),
-        Params(vect, clust_hirarchical, aff_euclidean, link_avarage, min_df, max_df, k, num_of_documents),
-        Params(vect, clust_kneams, aff_euclidean, link_ward, min_df, max_df, k, num_of_documents),
-        Params(vect, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, k, num_of_documents),
-        Params(vect, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, k, num_of_documents),
-    ]
-for vect, k in itertools.product([vect_tfidf, vect_w2v],all_k):
-    prarameters = prarameters + \
-    [
-        Params(vect, clust_kneams, aff_cosine, link_ward, min_df, max_df, k, num_of_documents),
-    ]
-    '''
-files = os.listdir(os.path.curdir)
-for file in files:
+num_of_documents = len(emails)
+
+#prarameters = [Params(vect_w2v, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents,True)]
+prarameters = generate_params(all_vect, min_df, max_df, all_k, num_of_documents,True)
+
+for file in os.listdir(ncut_dir):
     if file.startswith('linkage_table'):
         warnings.warn('warning: csv file already exists')
-        ans = args.dellink
-        if (ans):
-            os.remove(file)
-            print('%s deleted!' % file)
+        ans = args.ncut_only
+        if (not ans):
+            os.rename(os.path.join(ncut_dir,file),os.path.join(ncut_dir,'_' + file))
+            print('%s renamed!' % file)
 
 # params
-
+if(args.ncut_only):
+    print('executing ncut...')
+    for k in [20]:
+        results_ncut = anlz.ncut_clustering(ncut_dir, k, labels)
+        print('ncut accuracy (k=%d) = %f' % (k, results_ncut.get_list()[0]))
+        save_results(Params(ncut_stam, ncut_stam, ncut_stam, ncut_stam, min_df, max_df, k, num_of_documents, True), results_ncut,
+                     results_ncut, results_dir)
+    exit(0)
 
 for idx, param in enumerate(prarameters):
     try:
+        labels = corpus.labels
+
         # setup
         # t = time.localtime()
         # timestamp = time.strftime('%b_%d_%Y_%H%M', t)
@@ -125,9 +132,9 @@ for idx, param in enumerate(prarameters):
         #    os.mkdir('results/' + timestamp)
 
         np.random.seed(4)
-        print('iter {}/{}'.format(idx, len(prarameters)))
+        print('iter {}/{}'.format(idx+1, len(prarameters)))
 
-        emails = emails[:param.max_num]
+        #emails = emails[:param.max_num]
 
         # preprocess
         # emails = [pp.clean_text(e) for e in emails]
@@ -147,11 +154,37 @@ for idx, param in enumerate(prarameters):
             emails_representation = tf_idf.toarray()
         elif (param.vectorizing == vect_w2v):
             # Word2Vec
-            emails_representation = vr.BOW_w2v(emails)
+            emails_representation = vr.BOW_w2v(emails,"w2v.pickle")
         elif param.vectorizing == vect_LM:
             data = batchify(corpus.only_encoded_docs, 1, device)
             emails_representation = get_docs_repr(model, data)
+        elif param.vectorizing == vect_gilad:
+            # data = batchify(corpus.only_encoded_docs, 1, device)
+            import opts
+
+            # take only test documents (fist 1000 are val last 2000 are train)
+            ntokens = len(corpus.decoder)
+            num_of_documents = len(corpus.only_encoded_docs[1000:-2000])
+            labels = corpus.labels[1000:-2000]
+            pp_docs = [' '.join([corpus.decoder[str(w)] for w in doc]) for doc in
+                       corpus.only_encoded_docs]
+            emails = pp_docs[1000:-2000]
+            super_class_labels = corpus.super_class_labels[1000:-2000]
+
+            opt = opts.parse_opt()
+            emails_representation, labels_not_used = create_vec(opt)  # get numpy matrix
+
+            # emails_representation = emails_representation[1000:-2000]
+        else:
+            raise ValueError('vectorizing is not supported with: ' + param.clustering)
+
+        print('saving tsne...')
+        fname = tsne_dir + '/' + param.vectorizing + '.PNG'
+        fname_super = tsne_dir + '/' + param.vectorizing + '_super.PNG'
+        if not os.path.exists(fname):
+            anlz.plot_tsne(emails_representation, (labels_names, super_class_labels_names), seed=4, perplexity=30, alpha=0.3, fpath = (fname,fname_super))
         # anlz.tsne_plot(emails_representation, labels, args.seed)
+
         print('clustering...')
         ##clustering
         if (param.clustering == clust_kneams):
@@ -169,17 +202,17 @@ for idx, param in enumerate(prarameters):
         else:
             raise ValueError('clustering is not supported with: ' + param.clustering)
         # analyze
-
+        print('analyzing...')
         random_clst = np.random.randint(0, param.k, param.max_num)
-        results = anlz.analyze_clustering(labels[:param.max_num], clusters, number_of_labels)
-        results_rand = anlz.analyze_clustering(labels[:param.max_num], random_clst, number_of_labels)
-        results_super_class = anlz.analyze_clustering(corpus.super_class_labels[:param.max_num], clusters,
-                                                      number_of_labels)
+        results,results_super_class = anlz.analyze_clustering(labels, clusters, number_of_labels,corpus.super_class_labels, number_of_labels_super)
+        #results_rand = anlz.analyze_clustering(labels[:param.max_num], random_clst, number_of_labels)
+        #results_super_class = anlz.analyze_clustering(corpus.super_class_labels[:param.max_num], clusters,
+        #                                              number_of_labels)
         # print('accuracy: ', results.acc)
         # print('accuracy random labeling: ', results_rand.acc)
-        print('analyzing and saving...')
+        print('saving...')
 
-        acc = save_results(param, results)
+        save_results(param, results, results_super_class, results_dir, ncut_dir)
         print('accuracy = %f' % results.get_list()[0])
         print('accuracy by super_class= %f' % results_super_class.get_list()[0])
         '''
@@ -221,6 +254,9 @@ for idx, param in enumerate(prarameters):
         '''
     except Exception as e:
         print('error: %s' % e)
-        raise
+for k in [20]:
+    results_ncut = anlz.ncut_clustering(ncut_dir,k)
+    print('ncut accuracy (k=%d) = %f' % (k,results_ncut.get_list()[0]))
+    save_results(Params(ncut_stam, ncut_stam, ncut_stam, ncut_stam, min_df, max_df, k, max_num, True), results, results, results_dir)
 
 # total_linkage_matrix = anlz.calc_total_linkage_matrix(num_of_documents)

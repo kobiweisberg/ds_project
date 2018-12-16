@@ -172,11 +172,15 @@ class DocVec(nn.Module):
             outputs = self.conv(outputs.unsqueeze(0).cpu())
         #outputs = self.conv(outputs.unsqueeze(0))
         outputs = self.max_pool(outputs.squeeze(-1))
-        if eval_flag == True:
-            return torch.transpose(outputs.squeeze(0), 0, 1)
-        # outputs = self.ReLU(self.logit_1(torch.t(outputs.squeeze(0))))
-        # outputs = self.ReLU(self.logit_2(outputs))
-        # outputs = F.log_softmax(self.logit_3(outputs))
+        if eval_flag == True:  # original
+            return torch.transpose(outputs.squeeze(0).detach(), 0, 1)   # original
+            #return torch.transpose(outputs.squeeze(0).detach(), 0, 1).cpu().numpy()
+
+        #outputs = self.ReLU(self.logit_1(torch.t(outputs.squeeze(0))))
+        #outputs = self.ReLU(self.logit_2(outputs))
+        #outputs = F.log_softmax(self.logit_3(outputs))
+        # if eval_flag == True:
+        #     return self.logits(torch.t(outputs.squeeze(0))).detach()
         outputs = F.log_softmax(self.logits(torch.t(outputs.squeeze(0))))
         loss, accuracy = loss_conv(outputs, labels, batch_size, train_flag)
         return loss, accuracy

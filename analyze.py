@@ -1,12 +1,56 @@
 from sklearn.metrics import confusion_matrix
-from utils import load_results
+from sklearn.cluster import SpectralClustering
+from utils import load_results, load_linkage_table
 import numpy as np
+import pandas as pd
+import seaborn as sns
 import matplotlib.pyplot as plt
-import matplotlib.colors as colors
-import matplotlib.cm as cm
-from sklearn import manifold
+from sklearn.manifold import TSNE as tsne
+
 #import dataframe as df
-def plot_embedding(X,y, title=None):
+def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=0.3,fpath = 'fig.PNG'):
+    if not(isinstance(labels,list) or isinstance(labels,tuple)):
+        raise ValueError('labels can be only list of lables or tuple of lists, got {}'.format(type(labels)))
+
+    print('compute tsne with perplexity {} and seed {}'.format(perplexity, seed))
+    tsne_components = tsne(n_components=2, perplexity=perplexity, random_state=seed)
+    transformed = tsne_components.fit_transform(high_dim_repr)
+    df = pd.DataFrame()
+    df['c1'] = transformed[:, 0]
+    df['c2'] = transformed[:, 1]
+    if isinstance(labels,tuple):
+        if (len(fpath) != len(labels)):
+            raise ValueError('several sets except to list of pathes')
+        print('tsne by several sets of labels')
+        for i,lst in enumerate(labels):
+            print('label set #{}'.format(i))
+            df['label_{}'.format(i)] = lst
+            plt.figure(i+1000)
+            ax = plt.subplot(111)
+            sns.scatterplot(data=df, x='c1', y='c2', hue='label_{}'.format(i), alpha=alpha)
+            box = ax.get_position()
+            ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+            # Put a legend to the right of the current axis
+            ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+            plt.savefig(fpath[i])
+            #plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
+        #plt.show()
+        #plt.savefig(fname)
+    #df = pd.DataFrame({'label':labels})
+    elif isinstance(labels,list):
+        print('tsne by one set of labels')
+        df['label']= labels
+        sns.scatterplot(data=df, x='c1', y='c2', hue='label_1', alpha=alpha)
+        ax = plt.subplot(111)
+        box = ax.get_position()
+        ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
+        # Put a legend to the right of the current axis
+        ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
+        plt.savefig(fpath)
+    else:
+        raise ValueError('labels can be only list of lables or tuple of lists, got {}'.format(type(labels)))
+
+'''def plot_embedding(X,y, title=None):
     x_min, x_max = np.min(X, 0), np.max(X, 0)
     X = (X - x_min) / (x_max - x_min)
 
@@ -17,7 +61,7 @@ def plot_embedding(X,y, title=None):
                  color=plt.cm.Set1(y[i] / 10.),
                  fontdict={'weight': 'bold', 'size': 9})
 
-    '''if hasattr(offsetbox, 'AnnotationBbox'):
+    ''''''if hasattr(offsetbox, 'AnnotationBbox'):
         # only print thumbnails with matplotlib > 1.0
         shown_images = np.array([[1., 1.]])  # just something big
         for i in range(X.shape[0]):
@@ -29,7 +73,7 @@ def plot_embedding(X,y, title=None):
             imagebox = offsetbox.AnnotationBbox(
                 offsetbox.OffsetImage(digits.images[i], cmap=plt.cm.gray_r),
                 X[i])
-            ax.add_artist(imagebox)'''
+            ax.add_artist(imagebox)''''''
     plt.xticks([]), plt.yticks([])
     if title is not None:
         plt.title(title)
@@ -44,7 +88,7 @@ def tsne_plot(X,y,random_state=0):
     for i,c in enumerate(colorlist):
             ax.scatter(X_tsne[y==i, 0], X_tsne[y==i, 1], s=50, linewidth=0.1,c=c)
     #plot_embedding(X_tsne,y,"t-SNE")
-    plt.show()
+    plt.show()'''
 
 def evaluate_many2one(mat, num_of_labels):
     mat = mat[:num_of_labels,:]
@@ -131,12 +175,21 @@ class Results:
         return list(self.precision)
     def get_list_full_recall(self):
         return list(self.recall)
-def analyze_clustering(labels, clusters, number_of_labels):
+
+def analyze_clustering(labels, clusters, number_of_labels, labels_super=None, number_of_labels_super=None):
     conf_mat = confusion_matrix(labels, clusters)
-    linkage_table = calc_linkage_table(clusters)
     labels_conf_mat = evaluate_many2one_conf_mat(conf_mat, number_of_labels)
     acc, precision, recall = conf_mat2scores(labels_conf_mat)
-    return Results(acc, precision, recall, conf_mat, labels_conf_mat, linkage_table)
+    if(labels_super):
+        conf_mat_super = confusion_matrix(labels_super, clusters)
+        labels_conf_mat_super = evaluate_many2one_conf_mat(conf_mat_super, number_of_labels_super)
+        acc_super, precision_super, recall_super = conf_mat2scores(labels_conf_mat_super)
+
+    linkage_table = calc_linkage_table(clusters)
+    if (labels_super):
+        return (Results(acc, precision, recall, conf_mat, labels_conf_mat, linkage_table),Results(acc_super, precision_super , recall_super, conf_mat_super, labels_conf_mat_super, None))
+    else:
+        return Results(acc, precision, recall, conf_mat, labels_conf_mat, linkage_table)
 
 
 def calc_total_linkage_matrix(number_of_docs,k):
@@ -146,6 +199,18 @@ def calc_total_linkage_matrix(number_of_docs,k):
     for link_mat in all_link_mat:
         total_link = total_link + link_mat
     return total_link
+
+
+def ncut_clustering(ncut_dir, k, true_labels):
+    try:
+        data = load_linkage_table(k, ncut_dir)
+    except IOError:
+        raise ValueError('error loading linkage table from %s with k=%d.\n maybe you should use --ncut_only to keep the name of the file.' % (ncut_dir,k))
+
+    sclust = SpectralClustering(affinity='precomputed', n_clusters=k, random_state=4)
+    sclust.fit(data)
+
+    return analyze_clustering(true_labels[:len(sclust.labels_)], sclust.labels_, 20)
 
 
 if __name__=='__main__':
@@ -169,4 +234,4 @@ if __name__=='__main__':
         total_link = total_link + link_mat
 
     print(total_link)'''
-    tsne_plot(np.array([[1,2,3],[2,5,6],[-8,-2,-1]]),np.array([1, 1, 2]))
+    plot_tsne(np.array([[1,2,3],[2,5,6],[-8,-2,-1]]),[1, 1, 2])
