@@ -1,4 +1,3 @@
-from sklearn.datasets import fetch_20newsgroups
 
 '''from pprint import pprint
 import os
@@ -50,7 +49,7 @@ parser.add_argument('--seed', type=int, default=1111,
                     help='random seed')
 parser.add_argument('--cuda', action='store_true',
                     help='use CUDA')
-parser.add_argument('--keeplink', action='store_true',
+parser.add_argument('--ncut_only', action='store_true',
                     help='delete old linkage table')
 args = parser.parse_args()
 
@@ -90,9 +89,11 @@ for example_idx in range(200):
         wf.write('\n------------------------------\n')
         wf.write(corpus.raw_data[corpus.encoded_docs[example_idx][0]])
 number_of_labels = 20  # TODO magic number
+number_of_labels_super = 6  # TODO magic number
+
 max_df = 1.  # 0.05
 min_df = 0.  # 1e-4
-all_k = [20, 50, 200]
+all_k = [20, 50] #, 200]
 all_vect = [vect_tfidf, vect_w2v, vect_bow]
 assert (len(emails) == len(labels))
 num_of_documents = len(emails)
@@ -103,14 +104,20 @@ prarameters = generate_params(all_vect, min_df, max_df, all_k, num_of_documents,
 for file in os.listdir(ncut_dir):
     if file.startswith('linkage_table'):
         warnings.warn('warning: csv file already exists')
-        ans = args.keeplink
+        ans = args.ncut_only
         if (not ans):
-            os.remove(os.path.join(ncut_dir,file))
-            print('%s deleted!' % file)
+            os.rename(os.path.join(ncut_dir,file),os.path.join(ncut_dir,'_' + file))
+            print('%s renamed!' % file)
 
 # params
-
-
+if(args.ncut_only):
+    print('executing ncut...')
+    for k in [20]:
+        results_ncut = anlz.ncut_clustering(ncut_dir, k, labels)
+        print('ncut accuracy (k=%d) = %f' % (k, results_ncut.get_list()[0]))
+        save_results(Params(ncut_stam, ncut_stam, ncut_stam, ncut_stam, min_df, max_df, k, num_of_documents, True), results_ncut,
+                     results_ncut, results_dir)
+    exit(0)
 
 for idx, param in enumerate(prarameters):
     try:
@@ -197,7 +204,7 @@ for idx, param in enumerate(prarameters):
         # analyze
         print('analyzing...')
         random_clst = np.random.randint(0, param.k, param.max_num)
-        results,results_super_class = anlz.analyze_clustering(labels, clusters, number_of_labels,corpus.super_class_labels)
+        results,results_super_class = anlz.analyze_clustering(labels, clusters, number_of_labels,corpus.super_class_labels, number_of_labels_super)
         #results_rand = anlz.analyze_clustering(labels[:param.max_num], random_clst, number_of_labels)
         #results_super_class = anlz.analyze_clustering(corpus.super_class_labels[:param.max_num], clusters,
         #                                              number_of_labels)
@@ -247,5 +254,9 @@ for idx, param in enumerate(prarameters):
         '''
     except Exception as e:
         print('error: %s' % e)
+for k in [20]:
+    results_ncut = anlz.ncut_clustering(ncut_dir,k)
+    print('ncut accuracy (k=%d) = %f' % (k,results_ncut.get_list()[0]))
+    save_results(Params(ncut_stam, ncut_stam, ncut_stam, ncut_stam, min_df, max_df, k, max_num, True), results, results, results_dir)
 
 # total_linkage_matrix = anlz.calc_total_linkage_matrix(num_of_documents)

@@ -1,5 +1,6 @@
 from sklearn.metrics import confusion_matrix
-from utils import load_results
+from sklearn.cluster import SpectralClustering
+from utils import load_results, load_linkage_table
 import numpy as np
 import pandas as pd
 import seaborn as sns
@@ -175,17 +176,20 @@ class Results:
     def get_list_full_recall(self):
         return list(self.recall)
 
-def analyze_clustering(labels, clusters, number_of_labels, labels_super):
+def analyze_clustering(labels, clusters, number_of_labels, labels_super=None, number_of_labels_super=None):
     conf_mat = confusion_matrix(labels, clusters)
     labels_conf_mat = evaluate_many2one_conf_mat(conf_mat, number_of_labels)
     acc, precision, recall = conf_mat2scores(labels_conf_mat)
-
-    conf_mat_super = confusion_matrix(labels_super, clusters)
-    labels_conf_mat_super = evaluate_many2one_conf_mat(conf_mat_super, number_of_labels)
-    acc_super, precision_super, recall_super = conf_mat2scores(labels_conf_mat_super)
+    if(labels_super):
+        conf_mat_super = confusion_matrix(labels_super, clusters)
+        labels_conf_mat_super = evaluate_many2one_conf_mat(conf_mat_super, number_of_labels_super)
+        acc_super, precision_super, recall_super = conf_mat2scores(labels_conf_mat_super)
 
     linkage_table = calc_linkage_table(clusters)
-    return (Results(acc, precision, recall, conf_mat, labels_conf_mat, linkage_table),Results(acc_super, precision_super , recall_super, conf_mat_super, labels_conf_mat_super, None))
+    if (labels_super):
+        return (Results(acc, precision, recall, conf_mat, labels_conf_mat, linkage_table),Results(acc_super, precision_super , recall_super, conf_mat_super, labels_conf_mat_super, None))
+    else:
+        return Results(acc, precision, recall, conf_mat, labels_conf_mat, linkage_table)
 
 
 def calc_total_linkage_matrix(number_of_docs,k):
@@ -195,6 +199,18 @@ def calc_total_linkage_matrix(number_of_docs,k):
     for link_mat in all_link_mat:
         total_link = total_link + link_mat
     return total_link
+
+
+def ncut_clustering(ncut_dir, k, true_labels):
+    try:
+        data = load_linkage_table(k, ncut_dir)
+    except IOError:
+        raise ValueError('error loading linkage table from %s with k=%d.\n maybe you should use --ncut_only to keep the name of the file.' % (ncut_dir,k))
+
+    sclust = SpectralClustering(affinity='precomputed', n_clusters=k, random_state=4)
+    sclust.fit(data)
+
+    return analyze_clustering(true_labels[:len(sclust.labels_)], sclust.labels_, 20)
 
 
 if __name__=='__main__':
