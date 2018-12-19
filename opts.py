@@ -37,9 +37,9 @@ def parse_opt():
                         help='length of cnn filter')
     parser.add_argument('--filter_num', type=float, default=200, #50 #100, # 200
                         help='number of cnn filters (from the same size')
-    parser.add_argument('--model_name', type=str, default='model_conv_pp1_max_0.05_min_0.0001.pth',
+    parser.add_argument('--model_name', type=str, default='model_conv_pp_kobi_17_12_18_max_0.05_min_0.0001.pth',
                     help='model name')
-    parser.add_argument('--load_model_name', type=str, default='/model_conv_pp1_max_0.05_min_0.0001.pth',
+    parser.add_argument('--load_model_name', type=str, default='/model_conv_pp_kobi_17_12_18_max_0.05_min_0.0001.pth',
                         help='model name')
     parser.add_argument('--save_file', type=int, default=0,
                         help='save or don\'t save all encoded doc vectors')

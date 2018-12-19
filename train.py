@@ -1,12 +1,12 @@
-"""from collections import Counter
+from collections import Counter
 from tqdm import tqdm
 from sklearn.datasets import fetch_20newsgroups
 import numpy as np
 from tqdm import tqdm
 import spacy
-#from gensim import corpora, models
+from gensim import corpora, models
 import os
-import sys"""
+import sys
 from dataloader import *
 import opts
 from models import DocEncoder
@@ -16,10 +16,10 @@ from torch.autograd import Variable
 import torch.optim as optim
 import time
 from six.moves import cPickle
-#import collections
-#import matplotlib.pyplot as plt
+import collections
+import matplotlib.pyplot as plt
 
-os.environ["CUDA_VISIBLE_DEVICES"] = '1'
+os.environ["CUDA_VISIBLE_DEVICES"] = '0'
 
 def train(opt):
 
@@ -151,6 +151,7 @@ def train(opt):
         # Stop if reaching max epochs
         if epoch >= opt.max_epochs and opt.max_epochs != -1:
             break
-
-opt = opts.parse_opt()
-train(opt)
+if __name__=='__main__':
+#def main():
+    opt = opts.parse_opt()
+    train(opt)
