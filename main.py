@@ -15,6 +15,7 @@ import analyze as anlz
 import warnings
 import argparse
 from LM_vectorizer import batchify, get_docs_repr
+import create_vec
 
 import torch
 from torch.autograd import Variable
@@ -63,7 +64,8 @@ device = torch.device("cuda" if args.cuda else "cpu")
 corpus = Dataloader(args)
 labels_names = [corpus.target_names[x] for x in corpus.labels]
 super_class_labels_names = corpus.super_class_labels_by_name
-
+super_class_labels = corpus.super_class_labels
+#os.chdir('/home/lab/vgilad/PycharmProjects/lstm_ds_project/18_12')
 ntokens = len(corpus.decoder)
 num_of_documents = len(corpus.only_encoded_docs)
 labels = corpus.labels
@@ -95,7 +97,7 @@ assert (len(emails) == len(labels))
 num_of_documents = len(emails)
 
 #prarameters = [Params(vect_tfidf, clust_kneams, aff_euclidean, link_ward, min_df, max_df, 20, num_of_documents,True)]
-prarameters = generate_params([vect_LM], min_df, max_df, all_k, num_of_documents,True)
+prarameters = generate_params([vect_gilad], min_df, max_df, all_k, num_of_documents,True)
 
 for file in os.listdir(ncut_dir):
     if file.startswith('linkage_table'):
@@ -172,9 +174,11 @@ for idx, param in enumerate(prarameters):
                        corpus.only_encoded_docs]
             emails = pp_docs[1000:-2000]
             super_class_labels = corpus.super_class_labels[1000:-2000]
+            super_class_labels_names = corpus.super_class_labels_by_name[1000:-2000]
+            labels_names = [corpus.target_names[x] for x in labels]
 
             opt = opts.parse_opt()
-            emails_representation, labels_not_used = create_vec(opt)  # get numpy matrix
+            emails_representation, labels_not_used = create_vec.create_vec(opt)  # get numpy matrix
 
             # emails_representation = emails_representation[1000:-2000]
         else:
@@ -206,7 +210,7 @@ for idx, param in enumerate(prarameters):
         # analyze
         print('analyzing...')
         random_clst = np.random.randint(0, param.k, param.max_num)
-        results,results_super_class = anlz.analyze_clustering(labels, clusters, number_of_labels,corpus.super_class_labels, number_of_labels_super)
+        results,results_super_class = anlz.analyze_clustering(labels, clusters, number_of_labels,super_class_labels, number_of_labels_super)
         #results_rand = anlz.analyze_clustering(labels[:param.max_num], random_clst, number_of_labels)
         #results_super_class = anlz.analyze_clustering(corpus.super_class_labels[:param.max_num], clusters,
         #                                              number_of_labels)
