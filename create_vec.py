@@ -69,13 +69,14 @@ def create_vec(opt, make_plot=False):
     labels_names = [loader.target_names[x] for x in labels]
     super_class_labels_names = loader.super_class_labels_by_name
     vecs_rep_all = vecs_rep_all.detach().numpy()
-    embedding_size_str = '_model_conv_pp1_max_0.05_min_0.0001'
+    embedding_size_str = '_model_conv_pp_kobi_17_12_18_max_0.05_min_0.0001'
     if opt.save_file:  # default is not saving
         np.save('/home/lab/vgilad/PycharmProjects/lstm_ds_project/files/vecs_rep_all' + embedding_size_str + '.npy', vecs_rep_all)
         np.save('/home/lab/vgilad/PycharmProjects/lstm_ds_project/files/labels_names' + embedding_size_str, np.asarray(labels_names))
     else:
         vecs_rep_all = np.load('/home/lab/vgilad/PycharmProjects/lstm_ds_project/files/vecs_rep_all' + embedding_size_str + '.npy')
         labels_names = np.load('/home/lab/vgilad/PycharmProjects/lstm_ds_project/files/labels_names.npy')
+        print('vecs and labels are loaded')
     if make_plot:
         #corpus = Dataloader(args)
         #stop = len(labels_names) + n_start
@@ -93,8 +94,9 @@ def create_vec(opt, make_plot=False):
 #create_vec()
 
 if __name__=='__main__':
-    from LM_vectorizer import plot_tsne
+    #from LM_vectorizer import plot_tsne
 
     opt = opts.parse_opt()
-    vecs = create_vec(opt, make_plot=True)
+    create_vec(opt, make_plot=False)
+    #vecs = create_vec(opt, make_plot=True)
 
