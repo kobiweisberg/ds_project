@@ -8,31 +8,45 @@ import matplotlib.pyplot as plt
 from sklearn.manifold import TSNE as tsne
 
 #import dataframe as df
-def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=0.3,fpath = 'fig.PNG'):
+def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=0.3,fpath = None):
     if not(isinstance(labels,list) or isinstance(labels,tuple)):
         raise ValueError('labels can be only list of lables or tuple of lists, got {}'.format(type(labels)))
+    df = genrate_tsne(high_dim_repr,seed=seed,perplexity=perplexity)
+    plot_tsne_df(df,labels = labels,alpha=alpha,fpath = fpath)
+    return df
 
+def genrate_tsne(high_dim_repr,seed=4,perplexity=30):
     print('compute tsne with perplexity {} and seed {}'.format(perplexity, seed))
     tsne_components = tsne(n_components=2, perplexity=perplexity, random_state=seed)
     transformed = tsne_components.fit_transform(high_dim_repr)
     df = pd.DataFrame()
+
     df['c1'] = transformed[:, 0]
     df['c2'] = transformed[:, 1]
+    return df
+
+def plot_tsne_df(df,labels,fpath = None):
     if isinstance(labels,tuple):
-        if (len(fpath) != len(labels)):
+        if ( (fpath is not None) and ( len(fpath) != len(labels))):
             raise ValueError('several sets except to list of pathes')
         print('tsne by several sets of labels')
         for i,lst in enumerate(labels):
             print('label set #{}'.format(i))
+            print(len(lst))
             df['label_{}'.format(i)] = lst
+            print('arrived to tsne')
             plt.figure(i+1000)
             ax = plt.subplot(111)
             sns.scatterplot(data=df, x='c1', y='c2', hue='label_{}'.format(i), alpha=alpha)
+            print('arrived to tsne2')
             box = ax.get_position()
             ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
             # Put a legend to the right of the current axis
             ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-            plt.savefig(fpath[i])
+            if(fpath):
+                plt.savefig(fpath[i])
+            else:
+                plt.show()
             #plt.legend(bbox_to_anchor=(1.05, 1), loc=2, borderaxespad=0.)
         #plt.show()
         #plt.savefig(fname)
@@ -46,7 +60,10 @@ def plot_tsne(high_dim_repr,labels,seed=4,perplexity=30,alpha=0.3,fpath = 'fig.P
         ax.set_position([box.x0, box.y0, box.width * 0.8, box.height])
         # Put a legend to the right of the current axis
         ax.legend(loc='center left', bbox_to_anchor=(1, 0.5))
-        plt.savefig(fpath)
+        if(fpath):
+            plt.savefig(fpath)
+        else:
+            plt.show()
     else:
         raise ValueError('labels can be only list of lables or tuple of lists, got {}'.format(type(labels)))
 
@@ -176,7 +193,7 @@ class Results:
     def get_list_full_recall(self):
         return list(self.recall)
 
-def analyze_clustering(labels, clusters, number_of_labels, labels_super=None, number_of_labels_super=None):
+def analyze_clustering(labels, clusters, number_of_labels, labels_super=None, number_of_labels_super=None, calc_linkage = True):
     conf_mat = confusion_matrix(labels, clusters)
     labels_conf_mat = evaluate_many2one_conf_mat(conf_mat, number_of_labels)
     acc, precision, recall = conf_mat2scores(labels_conf_mat)
@@ -184,8 +201,10 @@ def analyze_clustering(labels, clusters, number_of_labels, labels_super=None, nu
         conf_mat_super = confusion_matrix(labels_super, clusters)
         labels_conf_mat_super = evaluate_many2one_conf_mat(conf_mat_super, number_of_labels_super)
         acc_super, precision_super, recall_super = conf_mat2scores(labels_conf_mat_super)
-
-    linkage_table = calc_linkage_table(clusters)
+    if(calc_linkage):
+        linkage_table = calc_linkage_table(clusters)
+    else:
+        linkage_table = None
     if (labels_super):
         return (Results(acc, precision, recall, conf_mat, labels_conf_mat, linkage_table),Results(acc_super, precision_super , recall_super, conf_mat_super, labels_conf_mat_super, None))
     else:
