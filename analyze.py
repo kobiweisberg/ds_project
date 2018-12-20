@@ -25,7 +25,7 @@ def genrate_tsne(high_dim_repr,seed=4,perplexity=30):
     df['c2'] = transformed[:, 1]
     return df
 
-def plot_tsne_df(df,labels,fpath = None):
+def plot_tsne_df(df,labels,fpath = None, alpha=0.3):
     if isinstance(labels,tuple):
         if ( (fpath is not None) and ( len(fpath) != len(labels))):
             raise ValueError('several sets except to list of pathes')

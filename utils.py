@@ -62,18 +62,19 @@ class Params:
 def generate_params(all_vect, min_df, max_df, all_k, num_of_documents,ncut):
     prarameters = []
     for vect, k in itertools.product(all_vect,all_k):
-        prarameters = prarameters + \
+        '''prarameters = prarameters + \
         [
             Params(vect, clust_hirarchical, aff_euclidean, link_ward, min_df, max_df, k, num_of_documents,ncut),
             Params(vect, clust_hirarchical, aff_euclidean, link_complete, min_df, max_df, k, num_of_documents,ncut),
             Params(vect, clust_hirarchical, aff_euclidean, link_avarage, min_df, max_df, k, num_of_documents,ncut),
-            Params(vect, clust_hirarchical, aff_euclidean, link_single, min_df, max_df, k, num_of_documents, ncut),
+            #Params(vect, clust_hirarchical, aff_euclidean, link_single, min_df, max_df, k, num_of_documents, ncut),
             Params(vect, clust_kneams, aff_euclidean, link_ward, min_df, max_df, k, num_of_documents,ncut),
             Params(vect, clust_hirarchical, aff_cosine, link_complete, min_df, max_df, k, num_of_documents,ncut),
             Params(vect, clust_hirarchical, aff_cosine, link_avarage, min_df, max_df, k, num_of_documents,ncut),
-            Params(vect, clust_hirarchical, aff_cosine, link_single, min_df, max_df, k, num_of_documents, ncut),
+            #Params(vect, clust_hirarchical, aff_cosine, link_single, min_df, max_df, k, num_of_documents, ncut),
         ]
-    for vect, k in itertools.product([vect_tfidf, vect_w2v],all_k):
+        '''
+    for vect, k in itertools.product(all_vect,all_k):
         prarameters = prarameters + \
         [
             Params(vect, clust_kneams, aff_cosine, link_ward, min_df, max_df, k, num_of_documents,ncut),

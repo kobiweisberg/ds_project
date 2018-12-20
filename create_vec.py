@@ -1,15 +1,14 @@
 from dataloader import *
-import opts
+#import opts
 from models import DocEncoder
 import torch
 import time
 import numpy as np
-import argparse
+#import argparse
 import seaborn as sns
 
 os.environ["CUDA_VISIBLE_DEVICES"] = '1'
 def create_vec(opt, make_plot=False):
-
 
     n_start = None #1000#None#1000#200
     n_stop = None #-8500#None#-8500 #  -2000
@@ -92,11 +91,18 @@ def create_vec(opt, make_plot=False):
 #opt = opts.parse_opt()
 #create_vec(opt)
 #create_vec()
+def vect():
+    embedding_size_str = '_model_conv_pp_kobi_17_12_18_max_0.05_min_0.0001'
+    vecs_rep_all = np.load(
+        '/home/lab/vgilad/PycharmProjects/lstm_ds_project/files/vecs_rep_all' + embedding_size_str + '.npy')
+    labels_names = np.load(
+        '/home/lab/vgilad/PycharmProjects/lstm_ds_project/files/labels_names.npy')
+    print('vecs and labels are loaded')
+    return vecs_rep_all[1000:-2000], labels_names[1000:-2000]
 
-if __name__=='__main__':
-    #from LM_vectorizer import plot_tsne
-
-    opt = opts.parse_opt()
-    create_vec(opt, make_plot=False)
-    #vecs = create_vec(opt, make_plot=True)
+# if __name__=='__main__':
+#     #from LM_vectorizer import plot_tsne
+#     opt = opts.parse_opt()
+#     create_vec(opt, make_plot=False)
+#     #vecs = create_vec(opt, make_plot=True)
 

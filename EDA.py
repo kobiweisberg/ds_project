@@ -132,6 +132,7 @@ if __name__=='__main__':
     super_class_labels = [SUPER_CLASS2IX[name] for name in super_class_labels_by_name]
 
     ### hists
+    print(type(labels), ' ', type(labels_names))
     plot_hist(labels, labels_names)
     plot_hist(super_class_labels, super_class_target_names)
 

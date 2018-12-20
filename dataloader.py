@@ -28,21 +28,27 @@ from utils import *
 
 class Dataloader(data.Dataset):
 
-    def  __init__(self, opt):
+    def __init__(self, opt, path=None):
         self.opt = opt
+
         # load data
         cur_dir = os.path.abspath(os.curdir)
         '''cd = os.path.join(os.path.dirname(os.path.abspath(__file__)))  # original load of pp files
         sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files'))  # original load of pp files
         os.chdir(sys.path[-1])"""  # original load of pp files
         #os.chdir('/cortex/users/gilad/backup_lstm_ds_project/files')  # old pp
-        #os.chdir('/cortex/users/taitelh/ds_project/data/df_files_max_df_0.05_min_df_0.0001')  # hagai pp1
-        os.chdir('/cortex/users/taitelh/ds_project/data/df_files_max_df_0.5_min_df_0.0001')  # hagai pp2
-        '''
-        cd = os.path.join(os.path.dirname(os.path.abspath(__file__)))
-        sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files'))
-        os.chdir(opt.data)
-        print(opt.data)
+        #os.chdir('/cortex/users/taitelh/ds_project/data/df_files_max_df_0.05_min_df_0.0001')  # hagai pp1'''
+        #os.chdir('/cortex/users/taitelh/ds_project/data/df_files_max_df_0.05_min_df_0.0001/df_files_max_df_0.05_min_df_0.0001/')  # hagai pp2
+
+        # cd = os.path.join(os.path.dirname(os.path.abspath(__file__)))
+        # sys.path.append(os.path.join(os.path.dirname(os.path.abspath(__file__)), 'files'))
+        # os.chdir(opt.data)
+        # print(opt.data)
+        if not path:
+            path = opt.data
+        os.chdir(path)  # hagai pp2
+
+
         #6247dd986deef2cd291ab0c5ee43277a2cc2181c
 
         #self.decoder = np.load('decoder.npy')  # ix2word
